@@ -5,7 +5,14 @@ The ``filters`` module provides functions that filter the set of antecedent
 candidates.
 """
 
+from discoursegraphs.readwrite.conll import traverse_dependencies_up
+
 import preferences
+
+
+# TODO: review expletive verbs. (ex. "es ist neu; es gibt keine Milch")
+EXPLETIVE_VERBS = {"sein", "regnen", "gelingen", "bestehen", "geben"}
+
 
 def get_filtered_candidates(pocores, cand_list, (sent, word), sentence_dist,
                             verbose=False):
@@ -121,13 +128,24 @@ def check_coreference(pocores, antecedent, anaphora):
     """
     raise NotImplementedError
 
-def is_expletive(pocores, anaphora):
+def is_expletive(docgraph, token_node):
     """
-    Checks if a given Word is an expletive.
+    Checks if a given token is an expletive.
 
-    :param pocores: an instance of the Pocores class
-    :type pocores: ``Pocores``
-    :param anaphora: the anaphora's (sentence index, word index) tuple
-    :type anaphora: ``tuple`` of (``int``, ``int``)
+    Paramters
+    ---------
+    docgraph : ConllDocumentGraph
+        document graph which contains the token
+    token_node : str
+        the node ID of the token
+
+    Returns
+    -------
+    is_expletive : bool
     """
-    raise NotImplementedError
+    if docgraph.get_token(token_node) in (u'es', u'Es'):
+        for lemma in traverse_dependencies_up(docgraph, token_node,
+                                              node_attribute='plemma'):
+            if lemma in EXPLETIVE_VERBS:
+                return True
+    return False
