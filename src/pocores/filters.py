@@ -40,42 +40,63 @@ def get_filtered_candidates(pocores, cand_list, (sent, word), sentence_dist,
     """
     raise NotImplementedError
 
-def check_agreement(pocores, antecedent, anaphora):
+def morph_agreement(docgraph, antecedent_node, anaphora_node):
     """
     Checks if an anaphora and a potential antecedent have morphological
     agreement.
     If the anaphora is a possessive, only the features person and gender are
     checked, otherwise gender, person and number.
 
-    :param pocores: an instance of the Pocores class
-    :type pocores: ``Pocores``
-    :param antecedent: the antecedent's (sentence index, word index) tuple
-    :type antecedent: ``tuple`` of (``int``, ``int``)
-    :param anaphora: the anaphora's (sentence index, word index) tuple
-    :type anaphora: ``tuple`` of (``int``, ``int``)
+    Parameters
+    ----------
+    docgraph : ConllDocumentGraph
+        document graph which contains the token
+    antecedent_node : str
+        the node ID of the antecedent
+    anaphora_node : str
+        the node ID of the anaphora (candidate)
 
-    :return: True, if antecedent and anaphora agree in gender,
-    person (and number); False otherwise.
-    :rtype: ``bool``
+    Returns
+    -------
+    agreement : bool
+        True, iff there's morphological agreement between the two tokens
     """
-    def check_feat(antecedent_dict, anaphora_dict, feat): #TODO add doctest
+    antecedent = docgraph.node[antecedent_node]
+    anaphora = docgraph.node[anaphora_node]
+
+    #TODO: implement discoursegraphs issue #71 to make this work
+    for feat in ("gender", "person", "number"):
+        if not feature_agreement(antecedent, anaphora, feat):
+            return False
+    return True
+
+    def feature_agreement(antecedent_dict, anaphora_dict, feat):
         """
         Checks if anaphora and antecedent share the same feature. The
         principle of underspecification is used, i.e. only if both words have a
         certain feature and disagree in it the agreement check is False.
 
-        :param antecedent_dict: the feature dictionary of the antecedent
-        :type antecedent_dict: ``dict`` with ``str`` keys and ``str`` or ``int``
-         values
-        :param anaphora_dict: the feature dictionary of the anaphora
-        :type anaphora_dict: ``dict`` with ``str`` keys and ``str`` or ``int``
-         values
-        :return: False, if antecedent and anaphora disagree in a feature;
-        True otherwise.
-        :rtype: ``bool``
+        Parameters
+        ----------
+        antecedent_dict : dict
+            dict containing the features of the antecedent token node
+        anaphora_dict : dict
+            dict containing the features of the anaphora token node
+        feat : str
+            the name of the feature whose values shall be compared
+
+        Returns
+        -------
+        feature_agreement : bool
+            False, if antecedent and anaphora disagree in a feature;
+            True otherwise.
         """
-        raise NotImplementedError
-    raise NotImplementedError
+        if (feat in antecedent_dict and feat in anaphora_dict):
+            # TODO: fix issue #1 (underspecified features)
+            if antecedent_dict[feat] != anaphora_dict[feat]:
+                return False
+        return True
+
 
 def check_binding(pocores, antecedent, anaphor):
     """
