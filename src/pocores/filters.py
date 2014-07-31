@@ -98,23 +98,30 @@ def morph_agreement(docgraph, antecedent_node, anaphora_node):
         return True
 
 
-def check_binding(pocores, antecedent, anaphor):
+def is_bound(pocores, antecedent_node, anaphora_node):
     """
     Checks if two words can be anaphora and antecedent by the binding
     principles of chomsky.
     The binding category is considered the (sub)clause of the anaphora.
 
-    :param pocores: an instance of the Pocores class
-    :type pocores: ``Pocores``
-    :param antecedent: the antecedent's (sentence index, word index) tuple
-    :type antecedent: ``tuple`` of (``int``, ``int``)
-    :param anaphora: the anaphora's (sentence index, word index) tuple
-    :type anaphora: ``tuple`` of (``int``, ``int``)
+    Parameters
+    ----------
+    docgraph : ConllDocumentGraph
+        document graph which contains the token
+    antecedent_node : str
+        the node ID of the antecedent
+    anaphora_node : str
+        the node ID of the anaphora (candidate)
 
-    :return: True, if antecedent can be bound by anaphora; False otherwise.
-    :rtype: ``bool``
+    Returns
+    -------
+    agreement : bool
+        True, iff there's morphological agreement between the two tokens
     """
-    def get_binding_category(a): #TODO: describe binding categories better
+    antecedent = docgraph.node[antecedent_node]
+    anaphora = docgraph.node[anaphora_node]
+
+    def binding_category(a):  #TODO: describe binding categories better
         """
         Grammatical notions used by this function:
 
@@ -126,11 +133,13 @@ def check_binding(pocores, antecedent, anaphor):
         raise NotImplementedError
     raise NotImplementedError
 
+
 def check_semantik(pocores, antecedent, anaphor):
     """
     Placeholder
     """
     raise NotImplementedError
+
 
 def is_coreferent(docgraph, antecedent_node, anaphora_node,
                   lemma_attrib='plemma'):
