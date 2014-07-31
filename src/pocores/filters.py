@@ -128,7 +128,7 @@ def check_coreference(pocores, antecedent, anaphora):
     """
     raise NotImplementedError
 
-def is_expletive(docgraph, token_node):
+def is_expletive(docgraph, token_node, lemma_attrib='plemma'):
     """
     Checks if a given token is an expletive.
 
@@ -138,6 +138,10 @@ def is_expletive(docgraph, token_node):
         document graph which contains the token
     token_node : str
         the node ID of the token
+    lemma_attrib : str
+        the name of the CoNLL token column that contains the lemma information
+        (usually ``phead``, but sometimes ``head`` depending on the version
+        of mate-tools used to generate the input
 
     Returns
     -------
@@ -145,7 +149,7 @@ def is_expletive(docgraph, token_node):
     """
     if docgraph.get_token(token_node) in (u'es', u'Es'):
         for lemma in traverse_dependencies_up(docgraph, token_node,
-                                              node_attribute='plemma'):
+                                              node_attribute=lemma_attrib):
             if lemma in EXPLETIVE_VERBS:
                 return True
     return False
