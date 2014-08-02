@@ -7,8 +7,6 @@ candidates.
 
 from discoursegraphs.readwrite.conll import traverse_dependencies_up
 
-import preferences
-
 
 # TODO: review expletive verbs. (ex. "es ist neu; es gibt keine Milch")
 EXPLETIVE_VERBS = {"sein", "regnen", "gelingen", "bestehen", "geben"}
@@ -40,6 +38,7 @@ def get_filtered_candidates(pocores, cand_list, (sent, word), sentence_dist,
     """
     raise NotImplementedError
 
+
 def morph_agreement(docgraph, antecedent_node, anaphora_node):
     """
     Checks if an anaphora and a potential antecedent have morphological
@@ -63,12 +62,6 @@ def morph_agreement(docgraph, antecedent_node, anaphora_node):
     """
     antecedent = docgraph.node[antecedent_node]
     anaphora = docgraph.node[anaphora_node]
-
-    #TODO: implement discoursegraphs issue #71 to make this work
-    for feat in ("gender", "person", "number"):
-        if not feature_agreement(antecedent, anaphora, feat):
-            return False
-    return True
 
     def feature_agreement(antecedent_dict, anaphora_dict, feat):
         """
@@ -97,8 +90,14 @@ def morph_agreement(docgraph, antecedent_node, anaphora_node):
                 return False
         return True
 
+    #TODO: implement discoursegraphs issue #71 to make this work
+    for feat in ("gender", "person", "number"):
+        if not feature_agreement(antecedent, anaphora, feat):
+            return False
+    return True
 
-def is_bound(pocores, antecedent_node, anaphora_node):
+
+def is_bound(docgraph, antecedent_node, anaphora_node):
     """
     Checks if two words can be anaphora and antecedent by the binding
     principles of chomsky.
@@ -121,7 +120,7 @@ def is_bound(pocores, antecedent_node, anaphora_node):
     antecedent = docgraph.node[antecedent_node]
     anaphora = docgraph.node[anaphora_node]
 
-    def binding_category(a):  #TODO: describe binding categories better
+    def binding_category(a):  # TODO: describe binding categories better
         """
         Grammatical notions used by this function:
 
