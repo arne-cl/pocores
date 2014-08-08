@@ -97,19 +97,22 @@ def morph_agreement(docgraph, antecedent_node, anaphora_node):
     return True
 
 
-def is_bound(docgraph, antecedent_node, anaphora_node):
+def is_bound(docgraph, entity_map, antecedent_node_id, anaphora_node_id,
+             deprel_attrib='pdeprel', pos_attrib='ppos'):
     """
     Checks if two words can be anaphora and antecedent by the binding
     principles of chomsky.
     The binding category is considered the (sub)clause of the anaphora.
 
+    TODO: fix #2 to make this work
+
     Parameters
     ----------
     docgraph : ConllDocumentGraph
         document graph which contains the token
-    antecedent_node : str
+    antecedent_node_id : str
         the node ID of the antecedent
-    anaphora_node : str
+    anaphora_node_id : str
         the node ID of the anaphora (candidate)
 
     Returns
@@ -117,11 +120,25 @@ def is_bound(docgraph, antecedent_node, anaphora_node):
     agreement : bool
         True, iff there's morphological agreement between the two tokens
     """
-    antecedent = docgraph.node[antecedent_node]
-    anaphora = docgraph.node[anaphora_node]
+    antecedent = docgraph.node[antecedent_node_id]
+    anaphora = docgraph.node[anaphora_node_id]
 
-    def binding_category(a):  # TODO: describe binding categories better
+    def anaphora_boundaries(anaphora, entity_map, deprel_attrib,
+                            pos_attrib):
         """
+        TODO: describe binding categories better
+
+        Parameters
+        ----------
+        anaphora : dict
+            dict that contains features of the anaphora (candidate)
+
+        Returns
+        -------
+        boundaries : (str, str) tuple
+            tuple referencing the word positions of the anaphora's boundaries
+            (left boundary token ID, right boundary token ID)
+
         Grammatical notions used by this function:
 
             - Deprel: dependency relation to the HEAD. the set of possible
@@ -129,15 +146,65 @@ def is_bound(docgraph, antecedent_node, anaphora_node):
                 - PUNC: punctuation ("," or sentence final ".")
                 - CD: relation involving conjunctions (e.g. und, doch, aber)?
         """
-        raise NotImplementedError
-    raise NotImplementedError
+        ana_sent_id, ana_word_pos = anaphora['sent_pos'], anaphora['word_pos']
+        sent_length = len(docgraph.node['s{}'.format(ana_sent_id)]['tokens'])
+        begin = 1
+        end = sent_length
+
+        # find left boundary of the anaphora
+        # by iterating backwards from the anaphora's word position to the
+        # beginning of the sentence
+        for word_pos in range(ana_word_pos, 0, -1):
+            token_id = tokentuple2id(ana_sent_id, word_pos)
+            if docgraph.node[token_id][deprel_attrib] in ("PUNC", "CD"):
+                begin = word_pos
+                break
+
+        # find right boundary of the anaphora
+        # by iterating from the anaphora's word position to the end of the
+        # sentence
+        for word_pos in range(ana_word_pos, sent_length, 1):
+            token_id = tokentuple2id(ana_sent_id, word_pos)
+            if docgraph.node[token_id][deprel_attrib] in ("PUNC", "CD"):
+                end = word_pos
+                break
+
+        left_limit = tokentuple2id(ana_sent_id, begin)
+        right_limit = tokentuple2id(ana_sent_id, end)
+        return (left_limit, right_limit)
+
+    left_limit, right_limit = anaphora_boundaries(anaphora, deprel_attrib)
+
+    # binding principle 1
+    if anaphora[pos_attrib] == "PRF":
+        if ((anaphora['sent_pos'] != antecedent['sent_pos'])
+           or (antecedent['word_pos'] not in range(left_limit, right_limit))):
+            return False
+
+    # binding principle 2
+    if (anaphora[pos_attrib] == "PPER"
+       and antecedent[pos_attrib] not in ("PRF", "PPOSAT")):
+        for candidate_node_id in entity_map[antecedent_node_id]:
+            candidate = docgraph.node[candidate_node_id]
+            if ((anaphora['sent_pos'] == candidate['sent_pos'])
+               and (candidate['word_pos'] in range(left_limit, right_limit))):
+                return False
+
+    # binding principle 3
+    if anaphora[pos_attrib] in ("NN", "NE"):
+        for candidate_node_id in entity_map[antecedent_node_id]:
+            candidate = docgraph.node[candidate_node_id]
+            if anaphora['sent_pos'] == candidate['sent_pos']:
+                return False
+    return True
 
 
-def check_semantik(pocores, antecedent, anaphor):
+def tokentuple2id(sent_pos, word_pos):
     """
-    Placeholder
+    generates a token node ID (str) from a sentence index (int) and word pos
+    (int).
     """
-    raise NotImplementedError
+    return 's{}_t{}'.format(sent_pos, word_pos)
 
 
 def is_coreferent(docgraph, antecedent_node, anaphora_node,
