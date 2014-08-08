@@ -207,7 +207,7 @@ def tokentuple2id(sent_pos, word_pos):
     return 's{}_t{}'.format(sent_pos, word_pos)
 
 
-def is_coreferent(docgraph, antecedent_node, anaphora_node,
+def is_coreferent(docgraph, antecedent, anaphora,
                   lemma_attrib='plemma'):
     """
     So far: checks if two words have the same lemma. (We're using this for
@@ -219,9 +219,9 @@ def is_coreferent(docgraph, antecedent_node, anaphora_node,
     ---------
     docgraph : ConllDocumentGraph
         document graph which contains the token
-    antecedent_node : str
+    antecedent : str
         the node ID of the antecedent
-    anaphora_node : str
+    anaphora : str
         the node ID of the anaphora (candidate)
     lemma_attrib : str
         the name of the CoNLL token column that contains the lemma information
@@ -234,8 +234,8 @@ def is_coreferent(docgraph, antecedent_node, anaphora_node,
         True, if antecedent and anaphora share the same lemma. False
         otherwise.
     """
-    return docgraph.node[antecedent_node][lemma_attrib] == \
-        docgraph.node[anaphora_node][lemma_attrib]
+    return docgraph.node[antecedent][lemma_attrib] == \
+        docgraph.node[anaphora][lemma_attrib]
 
 
 def is_expletive(docgraph, token_node, lemma_attrib='plemma'):
