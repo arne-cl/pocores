@@ -86,6 +86,29 @@ class Pocores(object):
         self.entities[entity_node_id].append(token_node_id)
         return entity_node_id
 
+    def _get_children(self, token_node_id):
+        """
+        Given a token (node ID), returns this token and all its children in the
+        dependency structure (list of token node IDs).
+
+        Parameters
+        ----------
+        token_node_id : str
+            ID of the toke node whose children will be fetched
+        """
+        return sorted(traverse_dependencies_down(self.document, node_id),
+                      key=natural_sort_key)
+def traverse_dependencies_down(docgraph, node_id):
+    """
+    TODO: convert docgraph from multidigraph into digraph to avoid having
+    to iterate over a single edge_id.
+    """
+    yield node_id
+    for target in docgraph.edge[node_id]:
+        if any(edge_attr['edge_type'] == EdgeTypes.dominance_relation
+               for edge_id, edge_attr in docgraph.edge[node_id][target].iteritems()):
+            for target_id in traverse_dependencies_down(docgraph, target):
+                yield target_id
 
 
 if __name__ == '__main__':
