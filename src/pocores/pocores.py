@@ -133,6 +133,61 @@ class Pocores(object):
         sid = sent_id if isinstance(sent_id, str) else 's{}'.format(sent_id)
         return tokens2text(self.document, self.document.node[sid]['tokens'])
 
+    def _get_coref_chains(self):
+        """
+        returns the coreference chain for each anaphora/entity.
+
+        Returns
+        -------
+        coref_chains : list of lists of (str, str) tuples
+            a list of coreference chain lists. each coreference chain is
+            represented by an ordered list of (token string, token node ID)
+            tuples
+
+        TODO: implement self.entities; issue #2
+        """
+        return [self._get_wordlist(self.entities[i], verbose=True)
+                for i in self.entities.keys()]
+
+    def print_entity_grid(self, min_coref_chain_length=2,
+                          deprel_attrib='pdeprel'):
+        """
+        prints all coreference chains, including the grammatical function of
+        anaphora and potential antecedents.
+
+        TODO: implement self.entities; issue #2
+        """
+        for coref_chain in self._get_coref_chains():
+            if len(coref_chain) >= min_coref_chain_length:
+                # node ID of the first token in the chain
+                print "\n\nEntity '{0}':".format(coref_chain[0][1])
+                for (token, node_id) in coref_chain:
+                    token_dict = self.document.node[node_id]
+                    sent_index = token_dict['sent_pos']
+                    deprel = token_dict[deprel_attrib]
+                    print ("\t{0} in sentence {1} with function "
+                           "'{2}'".format(token, sent_index, deprel))
+
+    def _get_entity_grid(self, min_coref_chain_length=2,
+                         deprel_attrib='pdeprel'):
+        """
+        returns the entity grid as a dictionary.
+
+        TODO: describe the entity grid
+        """
+        coref_chains = [chain for chain in self._get_coref_chains()
+                        if len(chain) >= min_coref_chain_length]
+        for sent_id in self.document.sentences:
+            self.entity_grid[sent_id] = defaultdict(list)
+
+        for chain_index, coref_chain in enumerate(coref_chains):
+            for (token, node_id) in coref_chain:
+                token_dict = self.document.node[node_id]
+                sent_index = token_dict['sent_pos']
+                deprel = token_dict[deprel_attrib]
+                self.entity_grid[sent_index][chain_index].append(deprel)
+        return self.entity_grid, coref_chains
+
 
 def traverse_dependencies_down(docgraph, node_id):
     """
