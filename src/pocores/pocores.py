@@ -140,9 +140,10 @@ def traverse_dependencies_down(docgraph, node_id):
     to iterate over a single edge_id.
     """
     yield node_id
-    for target in docgraph.edge[node_id]:
+    out_edges = docgraph.edge[node_id]
+    for target in out_edges:
         if any(edge_attr['edge_type'] == EdgeTypes.dominance_relation
-               for edge_id, edge_attr in docgraph.edge[node_id][target].iteritems()):
+               for edge_id, edge_attr in out_edges[target].iteritems()):
             for target_id in traverse_dependencies_down(docgraph, target):
                 yield target_id
 
