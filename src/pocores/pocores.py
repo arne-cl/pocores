@@ -16,19 +16,17 @@ class Pocores(object):
     def __init__(self, document_graph):
         self.document = document_graph
 
-        # ana_to_id maps from an anaphora (int sentence, int word) tuple
-        # to its ID (int)
-        self.ana_to_id = {}
-
         # TODO: explain self.entities ???
         # entities maps from a token ID (str) to a list of token IDs
         self.entities = defaultdict(str)
 
-        # ana_to_ante maps from an anaphora token ID (str) to an antecedent token ID (str)
+        # ana_to_ante maps from an anaphora token ID (str) to an
+        # antecedent token ID (str)
         self.ana_to_ante = {}
 
         # EXPLETIVE_VERBS: a list of german expletive verbs
-        self.EXPLETIVE_VERBS = {"sein", "regnen", "gelingen", "bestehen", "geben"}
+        self.EXPLETIVE_VERBS = {"sein", "regnen", "gelingen", "bestehen",
+                                "geben"}
 
         # Class Variables # TODO: explain self.ref_id ???
         # TODO: I'm trying to get rid of ref_ids altogether, check if there
