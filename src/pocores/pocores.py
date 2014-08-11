@@ -98,7 +98,7 @@ class Pocores(object):
         token_node_id : str
             ID of the toke node whose children will be fetched
         """
-        return sorted(traverse_dependencies_down(self.document, node_id),
+        return sorted(traverse_dependencies_down(self.document, token_node_id),
                       key=natural_sort_key)
 
     def _get_word(self, token_node_id):
@@ -114,10 +114,10 @@ class Pocores(object):
         Returns a list of tokens, either as a list of word strings or as a list
         of (token string, token node ID) tuples.
         """
-        if verbose == False:
+        if not verbose:
             return (self._get_word(tni) for tni in token_node_ids)
-        elif verbose == True:
-            return ((self._get_word(tni), tni) for token in token_node_ids)
+        else:
+            return ((self._get_word(tni), tni) for tni in token_node_ids)
 
     def _get_sentence(self, sent_id):
         """
@@ -130,7 +130,7 @@ class Pocores(object):
             index (e.g. 1)
         """
         assert isinstance(sent_id, (int, str))
-        sid = sent_id if isinstance(sent_id, str) else 's{}'.format(send_id)
+        sid = sent_id if isinstance(sent_id, str) else 's{}'.format(sent_id)
         return tokens2text(self.document, self.document.node[sid]['tokens'])
 
 
