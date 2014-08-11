@@ -3,6 +3,7 @@
 # needs python 2.7 or later version
 
 import sys
+from collections import defaultdict
 
 from discoursegraphs.util import natural_sort_key
 from discoursegraphs.readwrite import ConllDocumentGraph
@@ -17,7 +18,7 @@ class Pocores(object):
 
         # TODO: explain self.entities ???
         # entities maps from a token ID (str) to a list of token IDs
-        self.entities = {}
+        self.entities = defaultdict(str)
 
         # ana_to_ante maps from an anaphora token ID (str) to an antecedent token ID (str)
         self.ana_to_ante = {}
