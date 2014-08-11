@@ -188,6 +188,49 @@ class Pocores(object):
                 self.entity_grid[sent_index][chain_index].append(deprel)
         return self.entity_grid, coref_chains
 
+    def resolve_anaphora(self, weights, max_sent_dist=4, pos_attrib='ppos',
+                         deprel_attrib='pdeprel'):
+        """
+        Resolves all nominal and pronominal anaphora in the text (stored in the
+        classes sentence dictionary).
+        Takes a list of weights as argument, which is passed on to the function
+        for pronominal resolution.
+
+        Parameters
+        ----------
+        weights : list of int
+            list of 7 weights that will be used for ranking anaphora candidates
+        max_sent_dist: int
+            number of preceding sentences that will be looked at, i.e. the
+            sentences that contain potential antecedents
+        """
+        assert isinstance(weights, list), \
+            'Weights should be a list, not a "{0}"'.format(type(weights))
+        assert all([isinstance(weight, int) for weight in weights]), \
+            'All weights should be integers, got "{0}" instead'.format(weights)
+        assert len(weights) == 7, \
+            'There should be 7 weights, not {0}'.format(len(weights))
+
+        self.entities.clear()
+        self.ana_to_ante.clear()
+
+        noun_tags = ("NN", "NE")
+        pronoun_tags = ("PPER", "PRELS", "PRF", "PPOSAT", "PDS")
+
+        for sent_id in self.document.sentences:
+            for token_id in self.document.sentences[sent_id]['tokens']:
+                tok_attrs = self.document.node[token_id]
+                # Treatment of Nominals
+                if (tok_attrs[pos_attrib] in noun_tags
+                   and tok_attrs[deprel_attrib] != "PNC"):
+                    self._resolve_nominal_anaphora(token_id)
+
+                # Treatment of Pronominals
+                elif (tok_attrs[pos_attrib] in pronoun_tags
+                      and not filters.is_expletive(self, token_id)):
+                    self._resolve_pronominal_anaphora(token_id, weights,
+                                                      max_sent_dist)
+
 
 def traverse_dependencies_down(docgraph, node_id):
     """
