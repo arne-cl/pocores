@@ -5,9 +5,12 @@
 import sys
 from collections import defaultdict, OrderedDict
 
-from discoursegraphs import tokens2text
+from discoursegraphs import EdgeTypes, tokens2text
 from discoursegraphs.util import natural_sort_key
 from discoursegraphs.readwrite import ConllDocumentGraph
+
+from pocores import filters
+
 
 class Pocores(object):
     def __init__(self, document_graph):
