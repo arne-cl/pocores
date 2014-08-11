@@ -3,7 +3,7 @@
 # needs python 2.7 or later version
 
 import sys
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 from discoursegraphs.util import natural_sort_key
 from discoursegraphs.readwrite import ConllDocumentGraph
