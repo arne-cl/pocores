@@ -76,8 +76,8 @@ class Pocores(object):
         TODO: get rid of this function after refactoring! alternatively,
               rename it to add_token_to_entity()
 
-        Params
-        ------
+        Parameters
+        ----------
         token_node_id : str
             ID of the token node to be added to an existing entity
         entity_node_id : str
