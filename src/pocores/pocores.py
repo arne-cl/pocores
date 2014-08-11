@@ -5,6 +5,7 @@
 import sys
 from collections import defaultdict, OrderedDict
 
+from discoursegraphs import tokens2text
 from discoursegraphs.util import natural_sort_key
 from discoursegraphs.readwrite import ConllDocumentGraph
 
@@ -98,6 +99,40 @@ class Pocores(object):
         """
         return sorted(traverse_dependencies_down(self.document, node_id),
                       key=natural_sort_key)
+
+    def _get_word(self, token_node_id):
+        """
+        returns the token (string) that a token node ID represents.
+
+        TODO: rename to get_token()
+        """
+        return self.document.get_token(token_node_id)
+
+    def _get_wordlist(self, token_node_ids, verbose=False):
+        """
+        Returns a list of tokens, either as a list of word strings or as a list
+        of (token string, token node ID) tuples.
+        """
+        if verbose == False:
+            return (self._get_word(tni) for tni in token_node_ids)
+        elif verbose == True:
+            return ((self._get_word(tni), tni) for token in token_node_ids)
+
+    def _get_sentence(self, sent_id):
+        """
+        returns the sentence (string) that is referred to by a sentence ID
+
+        Parameters
+        ----------
+        sent_id : int or str
+            the node ID of a sentence (e.g. 's1') or the equivalent sentence
+            index (e.g. 1)
+        """
+        assert isinstance(sent_id, (int, str))
+        sid = sent_id if isinstance(sent_id, str) else 's{}'.format(send_id)
+        return tokens2text(self.document, self.document.node[sid]['tokens'])
+
+
 def traverse_dependencies_down(docgraph, node_id):
     """
     TODO: convert docgraph from multidigraph into digraph to avoid having
