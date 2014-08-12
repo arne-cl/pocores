@@ -31,7 +31,7 @@ from discoursegraphs import EdgeTypes, tokens2text
 from discoursegraphs.util import natural_sort_key
 from discoursegraphs.readwrite import ConllDocumentGraph
 
-from pocores import filters
+from pocores import cli, filters
 from pocores import preferences as prefs
 
 
@@ -332,7 +332,6 @@ class Pocores(object):
         return antecedent
 
 
-
 def traverse_dependencies_down(docgraph, node_id):
     """
     TODO: convert docgraph from multidigraph into digraph to avoid having
@@ -347,6 +346,58 @@ def traverse_dependencies_down(docgraph, node_id):
                 yield target_id
 
 
+def run_pocores_with_cli_arguments():
+    parser, args = cli.parse_options()
+    if args.input == None:
+        parser.print_help()
+        sys.exit(0)
+    assert args.informat in ('2009', '2010')
+    assert args.outformat in ['xml', 'conll', 'bracketed', 'ids', 'paula']
+
+    docgraph = ConllDocumentGraph(args.input, conll_format=args.informat)
+    pocores = Pocores(docgraph)
+
+    weights = CONFIG_DICT['weights']
+    if args.weights: # if set, use command line weights.
+        weight_str_list = args.weights.split(',')
+        try:
+            cli_weights = [int(weight) for weight in weight_str_list]
+            weights = cli_weights
+        except ValueError as e:
+            print "Can't convert all weights to integers. {0}".format(e)
+
+    max_sent_dist = CONFIG_DICT['max_sent_dist']
+    if args.max_sent_dist: # if set, use sentence distance set via cli
+        try:
+            cli_max_sent_dist = int(args.max_sent_dist)
+            max_sent_dist = cli_max_sent_dist
+        except ValueError as e:
+            print "max_sent_dist must be an integer. {0}".format(e)
+
+    pocores.resolve_anaphora(weights, max_sent_dist)
+    if args.outformat == 'paula':
+        create_dir(args.out_filename)
+        convert_pocores_to_paula(pocores, os.path.basename(args.input),
+            args.out_filename, xml_base_file=None)
+    else:
+        stdout = sys.stdout
+        if args.out_filename != None:
+            file_object = open(args.out_filename, 'w+b')
+            sys.stdout = Stream(file_object)
+
+        {
+        'bracketed': output_with_brackets,
+        'xml': print_xml,
+        'conll': print_CoNLL,
+        'ids': print_ids
+        }[args.outformat](pocores)
+
+        sys.stdout = stdout
+
+
 if __name__ == '__main__':
-    conll_file = sys.argv[1]
-    pocoresgraph = ConllDocumentGraph(conll_file, conll_format='2010')
+    """
+    parses command line arguments, runs coreference analysis and produdes output
+    (stdout or file(s)).
+    """
+    run_pocores_with_cli_arguments()
