@@ -24,7 +24,6 @@ def parse_options():
     input_options.add_argument('-c', '--input_format', dest='informat',
         default='conll2010',
         help='Specify the input file format: conll2009 or conll2010')
-    input_options.add_argument('-s', '--stream', dest='from_stream', help='Read from stdin')
 
     coref_options = parser.add_argument_group("Coreference Options",
         "Change coreference resolution parameters without touching the code.")
