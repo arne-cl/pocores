@@ -175,6 +175,9 @@ class Pocores(object):
         max_sent_dist: int
             number of preceding sentences that will be looked at, i.e. the
             sentences that contain potential antecedents
+
+        TODO: make noun_tags, pronoun_tags set constants for effienciency
+        TODO: convert weights into a namedtuple
         """
         assert isinstance(weights, list), \
             'Weights should be a list, not a "{0}"'.format(type(weights))
@@ -183,6 +186,7 @@ class Pocores(object):
         assert len(weights) == 7, \
             'There should be 7 weights, not {0}'.format(len(weights))
 
+        # TODO: explain/show, why these structures have to be reset
         self.entities.clear()
         self.ana_to_ante.clear()
 
