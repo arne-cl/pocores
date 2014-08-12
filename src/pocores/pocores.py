@@ -59,35 +59,6 @@ class Pocores(object):
             candidates += self.entities[entity_node_id]
         return sorted(candidates, key=natural_sort_key)
 
-    def _store_new_referent(self, entity_node_id):
-        """
-        Adds a new discourse entity (represented by its token node ID) to the
-        map of known entities.
-
-        TODO: get rid of this function after refactoring! alternatively,
-              rename it to add_new_entity()
-        """
-        self.entities[entity_node_id] = []
-        return entity_node_id
-
-    def _store_old_referent(self, token_node_id, entity_node_id):
-        """
-        Registers a token under the ID of an already known discourse
-        entity.
-
-        TODO: get rid of this function after refactoring! alternatively,
-              rename it to add_token_to_entity()
-
-        Parameters
-        ----------
-        token_node_id : str
-            ID of the token node to be added to an existing entity
-        entity_node_id : str
-            ID of the first token node that references this entity
-        """
-        self.entities[entity_node_id].append(token_node_id)
-        return entity_node_id
-
     def _get_children(self, token_node_id):
         """
         Given a token (node ID), returns this token and all its children in the
