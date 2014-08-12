@@ -22,8 +22,8 @@ def parse_options():
     input_options.add_argument('-i', '--input', dest='input',
         help='Specify the input file', metavar='FILENAME')
     input_options.add_argument('-c', '--input_format', dest='informat',
-        default='conll2010',
-        help='Specify the input file format: conll2009 or conll2010')
+        default='2010',
+        help='Specify the CoNLL input file format: 2009 or 2010')
 
     coref_options = parser.add_argument_group("Coreference Options",
         "Change coreference resolution parameters without touching the code.")
@@ -47,7 +47,8 @@ def parse_options():
         ' of the following: xml, conll, bracketed, ids, paula'),
         metavar='FORMAT')
 
-    return parser.parse_args(sys.argv[1:])
+    return parser, parser.parse_args(sys.argv[1:])
 
 if __name__ == '__main__':
-    print parse_options()
+    parser, args = parse_options()
+    print args
