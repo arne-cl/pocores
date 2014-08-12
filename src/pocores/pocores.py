@@ -10,6 +10,7 @@ from discoursegraphs.util import natural_sort_key
 from discoursegraphs.readwrite import ConllDocumentGraph
 
 from pocores import filters
+from pocores import preferences as prefs
 
 
 class Pocores(object):
@@ -201,6 +202,109 @@ class Pocores(object):
                       and not filters.is_expletive(self, token_id)):
                     self._resolve_pronominal_anaphora(token_id, weights,
                                                       max_sent_dist)
+
+    def _resolve_nominal_anaphora(self, anaphora):
+        """
+        Tries to resolve a given nominal anaphora.
+        If this fails the given word is registered as a new discourse entity.
+
+        Parameters
+        ----------
+        anaphora : str
+            ID of the token node that represents the anaphora
+
+        Returns
+        -------
+        anaphora_or_antecedent : str
+            Returns the token node ID of the antecedent, iff an antecedent
+            was found. Otherwise the input (i.e. the token node ID of the
+            anaphora) is returned.
+        """
+        candidates_list = self._get_candidates()
+        # iterate over antecedent candidates, starting from the closest
+        # preceding one to the left-most one
+        candidates_list.reverse()
+        for antecedent in candidates_list:
+            if filters.is_coreferent(self, antecedent, anaphora):
+                self.entities[antecedent].append(anaphora)
+                return antecedent
+
+        if anaphora not in self.entities:
+            self.entities[anaphora] = []
+            return anaphora
+
+    def _resolve_pronominal_anaphora(self, anaphora, weights, max_sent_dist, pos_attrib='ppos'):
+        """
+        Tries to resolve a given pronominal anaphora by applying different
+        filters and preferences.
+        For the weighting of the different preferences a list of weights has to
+        be passed to the function. If resolution fails, the given pronoun is
+        registered as a new discourse entity.
+
+        This method relies on these grammatical categories:
+
+            - PRELS: substitutive relative pronoun, e.g. [der Hund ,] der
+            - PDS: substitutive demonstrative pronoun, e.g. dieser, jener
+
+            - PPER: irreflexive personal pronoun, e.g. ich, er, ihm, mich, dir
+            - PRF: reflexive personal pronoun, e.g. sich, einander, dich, mir
+            - PPOSAT: attributive possesive pronoung, e.g. mein [Buch], deine [Mutter]
+
+        @type anaphora: C{tuple} of (C{int}, C{int})
+        @type weights: C{list} of 7 C{int}
+        @param max_sent_dist: number of preceding sentences that will be looked at,
+        i.e. the sentences that contain potential antecedents
+        @type max_sent_dist: C{int}
+
+        TODO: implement filters.get_filtered_candidates() to make this work
+        TODO: provide documentation for scoring and/or convert weights into a namedtuple
+        """
+        cand_list = self._get_candidates()
+        filtered_candidates = filters.get_filtered_candidates(self, cand_list, anaphora, max_sent_dist)
+
+        if not filtered_candidates:
+            self.entities[anaphora] = []
+            return anaphora
+
+        # Preferences
+        candidate_dict = dict.fromkeys(filtered_candidates, 0)
+        anaphora_pos = self.document.node[anaphora][pos_attrib]
+        if anaphora_pos in set(["PRELS", "PDS"]):
+            # chooses the most recent candidate, if the word is a substitutive
+            # demonstrative/relative pronoun
+            can = max(candidate_dict)
+
+        if anaphora_pos in set(["PPER", "PRF", "PPOSAT"]):
+            # scores the candidates, if the word is a personal pronoun or an
+            # attributive possessive pronoun
+            for can in candidate_dict:
+                if prefs.check_parallelism(self, can, anaphora):
+                    candidate_dict[can] += weights[0]
+                if prefs.check_role(self, can, "SB"):
+                    candidate_dict[can] += weights[1]
+                if prefs.check_role(self, can, "OA"):
+                    candidate_dict[can] += weights[2]
+                if prefs.check_role(self, can, "DA"):
+                    candidate_dict[can] += weights[3]
+                candidate_dict[can] += weights[4] * math.log(prefs.get_chain_length(self, can))
+                candidate_dict[can] -= weights[5] * prefs.get_distance(can, anaphora)
+                candidate_dict[can] -= weights[6] * prefs.get_depth(self, can)
+                # NOTE: additional preferences can be added here
+
+            # Pick candidate with highest Score. If there are candidates with
+            # the same score, pick closest
+            antecedent = sorted([(v, k) for k, v in candidate_dict.iteritems()],
+                         reverse=True)[0][1] # TODO: debug this after _get_candidates() works
+
+        # TODO: add other pronoun resolution algorithm
+        # if anaphora_pos in [OTHER PRONOUNS]:
+            # antecedent = Result of OTHER PRONOUN RESOLUTION
+
+        # Store Result
+        self.ana_to_ante[anaphora] = antecedent # for Evaluation
+        self.entities[antecedent].append(anaphora)
+        return antecedent
+
 
 
 def traverse_dependencies_down(docgraph, node_id):
