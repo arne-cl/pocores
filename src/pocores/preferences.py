@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from discoursegraphs.readwrite.conll import traverse_dependencies_up
+
 
 def check_parallelism(pocores, antecedent_id, anaphora_id,
                       deprel_attrib='pdeprel'):
@@ -53,9 +55,9 @@ def get_chain_length(pocores, antecedent_id):
         return 0
 
 
-def get_depth(pocores, (sent, word)):
+def get_depth(pocores, token_id):
     """
-    Returns number of dependency edges from given word to root of the
+    Returns number of dependency edges from a given word to root of the
     sentence.
     """
-    raise NotImplementedError
+    return len(traverse_dependencies_up(pocores.document, token_id))
