@@ -25,6 +25,7 @@ this program; if not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
+import math
 from collections import defaultdict, OrderedDict
 
 from discoursegraphs import EdgeTypes, tokens2text
