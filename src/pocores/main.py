@@ -35,6 +35,11 @@ from pocores import cli, filters
 from pocores import preferences as prefs
 
 
+# TODO: evaluate weights
+WEIGHTS = [8, 2, 8, 3, 2, 7, 0]
+MAX_SENT_DIST = 4
+
+
 class Pocores(object):
     def __init__(self, document_graph):
         self.document = document_graph
@@ -357,20 +362,18 @@ def run_pocores_with_cli_arguments():
     docgraph = ConllDocumentGraph(args.input, conll_format=args.informat)
     pocores = Pocores(docgraph)
 
-    weights = CONFIG_DICT['weights']
+    weights = WEIGHTS
     if args.weights: # if set, use command line weights.
         weight_str_list = args.weights.split(',')
         try:
-            cli_weights = [int(weight) for weight in weight_str_list]
-            weights = cli_weights
+            weights = [int(weight) for weight in weight_str_list]
         except ValueError as e:
             print "Can't convert all weights to integers. {0}".format(e)
 
-    max_sent_dist = CONFIG_DICT['max_sent_dist']
+    max_sent_dist = MAX_SENT_DIST
     if args.max_sent_dist: # if set, use sentence distance set via cli
         try:
-            cli_max_sent_dist = int(args.max_sent_dist)
-            max_sent_dist = cli_max_sent_dist
+            max_sent_dist = int(args.max_sent_dist)
         except ValueError as e:
             print "max_sent_dist must be an integer. {0}".format(e)
 
