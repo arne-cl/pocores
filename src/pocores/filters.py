@@ -46,7 +46,7 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
         "Candidates mentioned no more than %i sentences ago" % sentence_dist)
 
     non_reflexive = (can for can in nearby_cands
-                 if pocores.document.node[can][pos_attrib] != "PRF")
+                 if pocores.node_attrs(can)[pos_attrib] != "PRF")
     results_dict["non_reflexive"] = (non_reflexive,
         ("Candidates that don't represent reflexive personal pronouns, "
          "e.g. sich, einander, dich, mir"))
@@ -89,7 +89,7 @@ def distance(token_node_id1, token_node_id2):
     return abs(sent1 - sent2)
 
 
-def morph_agreement(docgraph, antecedent_node, anaphora_node):
+def morph_agreement(pocores, antecedent_node, anaphora_node):
     """
     Checks if an anaphora and a potential antecedent have morphological
     agreement.
@@ -98,8 +98,8 @@ def morph_agreement(docgraph, antecedent_node, anaphora_node):
 
     Parameters
     ----------
-    docgraph : ConllDocumentGraph
-        document graph which contains the token
+    pocores : Pocores
+        an instance of the Pocores class
     antecedent_node : str
         the node ID of the antecedent
     anaphora_node : str
@@ -110,8 +110,8 @@ def morph_agreement(docgraph, antecedent_node, anaphora_node):
     agreement : bool
         True, iff there's morphological agreement between the two tokens
     """
-    antecedent = docgraph.node[antecedent_node]
-    anaphora = docgraph.node[anaphora_node]
+    antecedent = pocores.node_attrs(antecedent_node)
+    anaphora = pocores.node_attrs(anaphora_node)
 
     def feature_agreement(antecedent_dict, anaphora_dict, feat):
         """
@@ -147,7 +147,7 @@ def morph_agreement(docgraph, antecedent_node, anaphora_node):
     return True
 
 
-def is_bound(docgraph, entity_map, antecedent_node_id, anaphora_node_id,
+def is_bound(pocores, entity_map, antecedent_id, anaphora_id,
              deprel_attrib='pdeprel', pos_attrib='ppos'):
     """
     Checks if two words can be anaphora and antecedent by the binding
@@ -158,11 +158,11 @@ def is_bound(docgraph, entity_map, antecedent_node_id, anaphora_node_id,
 
     Parameters
     ----------
-    docgraph : ConllDocumentGraph
-        document graph which contains the token
-    antecedent_node_id : str
+    pocores : Pocores
+        an instance of the Pocores class
+    antecedent_id : str
         the node ID of the antecedent
-    anaphora_node_id : str
+    anaphora_id : str
         the node ID of the anaphora (candidate)
 
     Returns
@@ -170,8 +170,8 @@ def is_bound(docgraph, entity_map, antecedent_node_id, anaphora_node_id,
     agreement : bool
         True, iff there's morphological agreement between the two tokens
     """
-    antecedent = docgraph.node[antecedent_node_id]
-    anaphora = docgraph.node[anaphora_node_id]
+    antecedent = pocores.node_attrs(antecedent_node)
+    anaphora = pocores.node_attrs(anaphora_node)
 
     def anaphora_boundaries(anaphora, entity_map, deprel_attrib,
                             pos_attrib):
@@ -197,7 +197,7 @@ def is_bound(docgraph, entity_map, antecedent_node_id, anaphora_node_id,
                 - CD: relation involving conjunctions (e.g. und, doch, aber)?
         """
         ana_sent_id, ana_word_pos = anaphora['sent_pos'], anaphora['word_pos']
-        sent_length = len(docgraph.node['s{}'.format(ana_sent_id)]['tokens'])
+        sent_length = len(pocores.node_attrs('s{}'.format(ana_sent_id)]['tokens']))
         begin = 1
         end = sent_length
 
@@ -206,7 +206,7 @@ def is_bound(docgraph, entity_map, antecedent_node_id, anaphora_node_id,
         # beginning of the sentence
         for word_pos in range(ana_word_pos, 0, -1):
             token_id = tokentuple2id(ana_sent_id, word_pos)
-            if docgraph.node[token_id][deprel_attrib] in ("PUNC", "CD"):
+            if pocores.node_attrs(token_id)[deprel_attrib] in ("PUNC", "CD"):
                 begin = word_pos
                 break
 
@@ -215,7 +215,7 @@ def is_bound(docgraph, entity_map, antecedent_node_id, anaphora_node_id,
         # sentence
         for word_pos in range(ana_word_pos, sent_length, 1):
             token_id = tokentuple2id(ana_sent_id, word_pos)
-            if docgraph.node[token_id][deprel_attrib] in ("PUNC", "CD"):
+            if pocores.node_attrs(token_id)[deprel_attrib] in ("PUNC", "CD"):
                 end = word_pos
                 break
 
@@ -235,7 +235,7 @@ def is_bound(docgraph, entity_map, antecedent_node_id, anaphora_node_id,
     if (anaphora[pos_attrib] == "PPER"
        and antecedent[pos_attrib] not in ("PRF", "PPOSAT")):
         for candidate_node_id in entity_map[antecedent_node_id]:
-            candidate = docgraph.node[candidate_node_id]
+            candidate = pocores.node_attrs(candidate_node_id)
             if ((anaphora['sent_pos'] == candidate['sent_pos'])
                and (candidate['word_pos'] in range(left_limit, right_limit))):
                 return False
@@ -243,7 +243,7 @@ def is_bound(docgraph, entity_map, antecedent_node_id, anaphora_node_id,
     # binding principle 3
     if anaphora[pos_attrib] in ("NN", "NE"):
         for candidate_node_id in entity_map[antecedent_node_id]:
-            candidate = docgraph.node[candidate_node_id]
+            candidate = pocores.node_attrs(candidate_node_id)
             if anaphora['sent_pos'] == candidate['sent_pos']:
                 return False
     return True
@@ -257,7 +257,7 @@ def tokentuple2id(sent_pos, word_pos):
     return 's{}_t{}'.format(sent_pos, word_pos)
 
 
-def is_coreferent(docgraph, antecedent, anaphora,
+def is_coreferent(pocores, antecedent, anaphora,
                   lemma_attrib='plemma'):
     """
     So far: checks if two words have the same lemma. (We're using this for
@@ -267,8 +267,8 @@ def is_coreferent(docgraph, antecedent, anaphora,
 
     Paramters
     ---------
-    docgraph : ConllDocumentGraph
-        document graph which contains the token
+    pocores : Pocores
+        an instance of the Pocores class
     antecedent : str
         the node ID of the antecedent
     anaphora : str
@@ -284,18 +284,18 @@ def is_coreferent(docgraph, antecedent, anaphora,
         True, if antecedent and anaphora share the same lemma. False
         otherwise.
     """
-    return docgraph.node[antecedent][lemma_attrib] == \
-        docgraph.node[anaphora][lemma_attrib]
+    return pocores.node_attrs(antecedent)[lemma_attrib] == \
+        pocores.node_attrs(anaphora)[lemma_attrib]
 
 
-def is_expletive(docgraph, token_node, lemma_attrib='plemma'):
+def is_expletive(pocores, token_node, lemma_attrib='plemma'):
     """
     Checks if a given token is an expletive.
 
     Paramters
     ---------
-    docgraph : ConllDocumentGraph
-        document graph which contains the token
+    pocores : Pocores
+        an instance of the Pocores class
     token_node : str
         the node ID of the token
     lemma_attrib : str
@@ -307,8 +307,8 @@ def is_expletive(docgraph, token_node, lemma_attrib='plemma'):
     -------
     is_expletive : bool
     """
-    if docgraph.get_token(token_node) in (u'es', u'Es'):
-        for lemma in traverse_dependencies_up(docgraph, token_node,
+    if pocores.document.get_token(token_node) in (u'es', u'Es'):
+        for lemma in traverse_dependencies_up(pocores.document, token_node,
                                               node_attribute=lemma_attrib):
             if lemma in EXPLETIVE_VERBS:
                 return True
