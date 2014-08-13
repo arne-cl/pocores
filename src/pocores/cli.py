@@ -34,18 +34,17 @@ def parse_options():
         help=('Specify how many preceding sentences will be considered for'
             ' finding antecedents'))
 
-
     output_options = parser.add_argument_group("Output Options",
         "These options allow you to specify various output options")
-    output_options.add_argument('-o', '--output', dest='out_filename',
-        help=('Specify the output file to write to.\n'
-            'If the output format is paula, specify an output folder!'),
-            metavar='FILENAME')
+    output_options.add_argument('-o', '--output', dest='output_file',
+        nargs='?', type=file, default=sys.stdout,
+        help=('Specify the output file to write to.'),
+        metavar='FILENAME')
     output_options.add_argument('-f', '--output_format', dest='outformat',
         default='bracketed',
         help=('Specify format the output shall be printed in. Format can be one'
-        ' of the following: xml, conll, bracketed, ids'),
-        metavar='FORMAT')
+        ' of the following: bracketed'),
+        metavar='OUTFORMAT')
 
     return parser, parser.parse_args(sys.argv[1:])
 

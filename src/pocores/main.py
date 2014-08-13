@@ -357,7 +357,7 @@ def run_pocores_with_cli_arguments():
         parser.print_help()
         sys.exit(0)
     assert args.informat in ('2009', '2010')
-    assert args.outformat in ('xml', 'conll', 'bracketed', 'ids')
+    assert args.outformat in ('bracketed')
 
     docgraph = ConllDocumentGraph(args.input, conll_format=args.informat)
     pocores = Pocores(docgraph)
@@ -379,20 +379,9 @@ def run_pocores_with_cli_arguments():
 
     pocores.resolve_anaphora(weights, max_sent_dist)
 
-    stdout = sys.stdout
-    if args.out_filename != None:
-        file_object = open(args.out_filename, 'w+b')
-        sys.stdout = Stream(file_object)
-
-    # choose output function from dictionary, call it with pocores instance
-    {
-    'bracketed': output_with_brackets,
-    'xml': print_xml,
-    'conll': print_CoNLL,
-    'ids': print_ids
-    }[args.outformat](pocores)
-
-    sys.stdout = stdout
+    # currently, there's only one output format
+    if args.outformat == 'bracketed':
+        args.output_file.write(output_with_brackets(pocores))
 
 
 if __name__ == '__main__':
