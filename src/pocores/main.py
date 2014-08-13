@@ -221,7 +221,7 @@ class Pocores(object):
         pronoun_tags = ("PPER", "PRELS", "PRF", "PPOSAT", "PDS")
 
         for sent_id in self.document.sentences:
-            for token_id in self.document.sentences[sent_id]['tokens']:
+            for token_id in self.document.node[sent_id]['tokens']:
                 tok_attrs = self.document.node[token_id]
                 # Treatment of Nominals
                 if (tok_attrs[pos_attrib] in noun_tags
