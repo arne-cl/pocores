@@ -44,7 +44,7 @@ def parse_options():
     output_options.add_argument('-f', '--output_format', dest='outformat',
         default='bracketed',
         help=('Specify format the output shall be printed in. Format can be one'
-        ' of the following: xml, conll, bracketed, ids, paula'),
+        ' of the following: xml, conll, bracketed, ids'),
         metavar='FORMAT')
 
     return parser, parser.parse_args(sys.argv[1:])

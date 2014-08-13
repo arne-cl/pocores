@@ -352,7 +352,7 @@ def run_pocores_with_cli_arguments():
         parser.print_help()
         sys.exit(0)
     assert args.informat in ('2009', '2010')
-    assert args.outformat in ['xml', 'conll', 'bracketed', 'ids', 'paula']
+    assert args.outformat in ('xml', 'conll', 'bracketed', 'ids')
 
     docgraph = ConllDocumentGraph(args.input, conll_format=args.informat)
     pocores = Pocores(docgraph)
@@ -375,24 +375,21 @@ def run_pocores_with_cli_arguments():
             print "max_sent_dist must be an integer. {0}".format(e)
 
     pocores.resolve_anaphora(weights, max_sent_dist)
-    if args.outformat == 'paula':
-        create_dir(args.out_filename)
-        convert_pocores_to_paula(pocores, os.path.basename(args.input),
-            args.out_filename, xml_base_file=None)
-    else:
-        stdout = sys.stdout
-        if args.out_filename != None:
-            file_object = open(args.out_filename, 'w+b')
-            sys.stdout = Stream(file_object)
 
-        {
-        'bracketed': output_with_brackets,
-        'xml': print_xml,
-        'conll': print_CoNLL,
-        'ids': print_ids
-        }[args.outformat](pocores)
+    stdout = sys.stdout
+    if args.out_filename != None:
+        file_object = open(args.out_filename, 'w+b')
+        sys.stdout = Stream(file_object)
 
-        sys.stdout = stdout
+    # choose output function from dictionary, call it with pocores instance
+    {
+    'bracketed': output_with_brackets,
+    'xml': print_xml,
+    'conll': print_CoNLL,
+    'ids': print_ids
+    }[args.outformat](pocores)
+
+    sys.stdout = stdout
 
 
 if __name__ == '__main__':
