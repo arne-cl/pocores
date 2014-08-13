@@ -70,6 +70,12 @@ class Pocores(object):
         # TODO: write entity grid description
         self.entity_grid = {}
 
+    def node_attrs(self, token_node_id):
+        """
+        returns the attribute dictionary of a token, given its node ID.
+        """
+        return self.document.node[token_node_id]
+
     def _get_candidates(self):
         """
         Returns list of all known discourse entities.
@@ -129,7 +135,7 @@ class Pocores(object):
         """
         assert isinstance(sent_id, (int, str))
         sid = sent_id if isinstance(sent_id, str) else 's{}'.format(sent_id)
-        return tokens2text(self.document, self.document.node[sid]['tokens'])
+        return tokens2text(self.document, self.node_attrs(sid)['tokens'])
 
     def _get_coref_chains(self):
         """
@@ -160,7 +166,7 @@ class Pocores(object):
                 # node ID of the first token in the chain
                 print "\n\nEntity '{0}':".format(coref_chain[0][1])
                 for (token, node_id) in coref_chain:
-                    token_dict = self.document.node[node_id]
+                    token_dict = self.node_attrs(node_id)
                     sent_index = token_dict['sent_pos']
                     deprel = token_dict[deprel_attrib]
                     print ("\t{0} in sentence {1} with function "
@@ -180,8 +186,7 @@ class Pocores(object):
 
         for chain_index, coref_chain in enumerate(coref_chains):
             for (token, node_id) in coref_chain:
-                token_dict = self.document.node[node_id]
-                sent_index = token_dict['sent_pos']
+                sent_index = self.node_attrs(node_id)['sent_pos']
                 deprel = token_dict[deprel_attrib]
                 self.entity_grid[sent_index][chain_index].append(deprel)
         return self.entity_grid, coref_chains
@@ -220,15 +225,15 @@ class Pocores(object):
         pronoun_tags = ("PPER", "PRELS", "PRF", "PPOSAT", "PDS")
 
         for sent_id in self.document.sentences:
-            for token_id in self.document.node[sent_id]['tokens']:
-                tok_attrs = self.document.node[token_id]
+            for token_id in self.node_attrs(sent_id)['tokens']:
+                tok_attrs = self.node_attrs(token_id)
                 # Treatment of Nominals
                 if (tok_attrs[pos_attrib] in noun_tags
                    and tok_attrs[deprel_attrib] != "PNC"):
                     print u"{3} nominal: {0} ({1} - {2})".format(tok_attrs['token'], tok_attrs[pos_attrib], tok_attrs[deprel_attrib], token_id)
                     nom_res = self._resolve_nominal_anaphora(token_id)
                     if nom_res != token_id:
-                        print u'\tresolved to {0} ({1})'.format(self.document.node[nom_res]['token'], nom_res)
+                        print u'\tresolved to {0} ({1})'.format(self.node_attrs(nom_res)['token'], nom_res)
 
                 # Treatment of Pronominals
                 #~ elif (tok_attrs[pos_attrib] in pronoun_tags
@@ -237,7 +242,7 @@ class Pocores(object):
                     #~ pro_res = self._resolve_pronominal_anaphora(token_id, weights,
                                                       #~ max_sent_dist)
                     #~ if pro_res != token_id:
-                        #~ print u'\tresolved to {0} ({1})'.format(self.document.node[pro_res]['token'], pro_res)
+                        #~ print u'\tresolved to {0} ({1})'.format(self.node_attrs(pro_res)['token'], pro_res)
 
     def _resolve_nominal_anaphora(self, anaphora):
         """
@@ -304,7 +309,7 @@ class Pocores(object):
 
         # Preferences
         candidate_dict = dict.fromkeys(filtered_candidates, 0)
-        anaphora_pos = self.document.node[anaphora][pos_attrib]
+        anaphora_pos = self.node_attrs(anaphora)[pos_attrib]
         if anaphora_pos in set(["PRELS", "PDS"]):
             # chooses the most recent candidate, if the word is a substitutive
             # demonstrative/relative pronoun
