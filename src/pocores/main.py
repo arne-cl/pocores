@@ -276,7 +276,8 @@ class Pocores(object):
             self.entities[anaphora] = []
             return anaphora
 
-    def _resolve_pronominal_anaphora(self, anaphora, weights, max_sent_dist, pos_attrib='ppos'):
+    def _resolve_pronominal_anaphora(self, anaphora, weights, max_sent_dist,
+                                     pos_attrib='ppos'):
         """
         Tries to resolve a given pronominal anaphora by applying different
         filters and preferences.
@@ -291,19 +292,23 @@ class Pocores(object):
 
             - PPER: irreflexive personal pronoun, e.g. ich, er, ihm, mich, dir
             - PRF: reflexive personal pronoun, e.g. sich, einander, dich, mir
-            - PPOSAT: attributive possesive pronoung, e.g. mein [Buch], deine [Mutter]
+            - PPOSAT: attributive possesive pronoung, e.g. mein [Buch],
+              deine [Mutter]
 
         @type anaphora: C{tuple} of (C{int}, C{int})
         @type weights: C{list} of 7 C{int}
-        @param max_sent_dist: number of preceding sentences that will be looked at,
-        i.e. the sentences that contain potential antecedents
+        @param max_sent_dist: number of preceding sentences that will be
+        looked at, i.e. the sentences that contain potential antecedents
         @type max_sent_dist: C{int}
 
         TODO: implement filters.get_filtered_candidates() to make this work
-        TODO: provide documentation for scoring and/or convert weights into a namedtuple
+        TODO: provide documentation for scoring and/or convert weights into
+              a namedtuple
         """
         cand_list = self._get_candidates()
-        filtered_candidates = filters.get_filtered_candidates(self, cand_list, anaphora, max_sent_dist)
+        filtered_candidates = filters.get_filtered_candidates(self, cand_list,
+                                                              anaphora,
+                                                              max_sent_dist)
 
         if not filtered_candidates:
             self.entities[anaphora] = []
@@ -336,15 +341,17 @@ class Pocores(object):
 
             # Pick candidate with highest Score. If there are candidates with
             # the same score, pick closest
-            antecedent = sorted([(v, k) for k, v in candidate_dict.iteritems()],
-                         reverse=True)[0][1] # TODO: debug this after _get_candidates() works
+            # TODO: debug this after _get_candidates() works
+            antecedent = sorted([(v, k)
+                                for k, v in candidate_dict.iteritems()],
+                                reverse=True)[0][1]
 
         # TODO: add other pronoun resolution algorithm
         # if anaphora_pos in [OTHER PRONOUNS]:
             # antecedent = Result of OTHER PRONOUN RESOLUTION
 
         # Store Result
-        self.ana_to_ante[anaphora] = antecedent # for Evaluation
+        self.ana_to_ante[anaphora] = antecedent  # for Evaluation
         self.entities[antecedent].append(anaphora)
         return antecedent
 
@@ -378,7 +385,7 @@ def output_with_brackets(pocores):
 
     for i in pocores.sentence_dict:
         # collect brackets
-        opening = {} # ( wordid:[ref_id, ref_id, ...] )
+        opening = {}  # ( wordid:[ref_id, ref_id, ...] )
         closing = {}
         for j in pocores.sentence_dict[i]:
             if (i, j) in pocores.ana_to_id and len(pocores.entities[pocores.ana_to_id[(i, j)]]) > 1:
@@ -419,7 +426,7 @@ def run_pocores_with_cli_arguments():
     pocores = Pocores(docgraph)
 
     weights = WEIGHTS
-    if args.weights: # if set, use command line weights.
+    if args.weights:  # if set, use command line weights.
         weight_str_list = args.weights.split(',')
         try:
             weights = [int(weight) for weight in weight_str_list]
@@ -427,7 +434,7 @@ def run_pocores_with_cli_arguments():
             print "Can't convert all weights to integers. {0}".format(e)
 
     max_sent_dist = MAX_SENT_DIST
-    if args.max_sent_dist: # if set, use sentence distance set via cli
+    if args.max_sent_dist:  # if set, use sentence distance set via cli
         try:
             max_sent_dist = int(args.max_sent_dist)
         except ValueError as e:
@@ -442,7 +449,7 @@ def run_pocores_with_cli_arguments():
 
 if __name__ == '__main__':
     """
-    parses command line arguments, runs coreference analysis and produdes output
-    (stdout or file(s)).
+    parses command line arguments, runs coreference analysis and produdes
+    output (stdout or file(s)).
     """
     run_pocores_with_cli_arguments()
