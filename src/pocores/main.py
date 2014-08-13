@@ -416,7 +416,7 @@ def output_with_brackets(pocores):
 
 def run_pocores_with_cli_arguments():
     parser, args = cli.parse_options()
-    if args.input == None:
+    if args.input is None:
         parser.print_help()
         sys.exit(0)
     assert args.informat in ('2009', '2010')
