@@ -15,8 +15,8 @@ EXPLETIVE_VERBS = {"sein", "regnen", "gelingen", "bestehen", "geben"}
 SENT_REGEX = re.compile('s(\d+)_t\d+')
 
 
-def get_filtered_candidates(pocores, cand_list, (sent, word), sentence_dist,
-                            verbose=False):
+def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
+                            verbose=False, pos_attrib='ppos'):
     """
     applies several filters to the list of potential antecedents.
 
@@ -24,11 +24,10 @@ def get_filtered_candidates(pocores, cand_list, (sent, word), sentence_dist,
     ----------
     pocores : Pocores
         an instance of the Pocores class
-    cand_list : list of (int, int) tuples
-        a list of potential antecedents, represented as
-        (sentence index, word index) tuples
-    (sent, word) : tuple of (int, int)
-        the (sentence index, word index tuple) of the anaphora
+    candidates : list of str
+        a list of potential antecedents, represented by their token node IDs
+    anaphora : str
+        token node ID of the anaphora
     sentence_dist : int
         number of preceding sentences that will be looked at, i.e. the
         sentences that contain potential antecedents
@@ -39,6 +38,43 @@ def get_filtered_candidates(pocores, cand_list, (sent, word), sentence_dist,
         list of likely antecedents, represented as
         (sentence index, word index) tuples
     """
+    results_dict = pocores.filtered_results[anaphora] = {}
+
+    nearby_cands = (can for can in candidates
+                               if distance(can, anaphora) <= sentence_dist)
+    results_dict["distance"] = (nearby_cands,
+        "Candidates mentioned no more than %i sentences ago" % sentence_dist)
+
+    non_reflexive = (can for can in nearby_cands
+                 if pocores.document.node[can][pos_attrib] != "PRF")
+    results_dict["non_reflexive"] = (non_reflexive,
+        ("Candidates that don't represent reflexive personal pronouns, "
+         "e.g. sich, einander, dich, mir"))
+
+    agreeing_cands = (can for can in non_reflexive
+                                if morph_agreement(pocores, can, anaphora))
+    results_dict["agreement"] = (agreeing_cands,
+    ("Candidates in morphological agreement with the anaphora"))
+
+    bound_cands = (can for can in agreeing_cands
+                        if is_bound(pocores, can, anaphora))
+    results_dict["binding"] = (bound_cands,
+        "Candidates that can be bound by the anaphora")
+
+    if verbose == True:
+        print ("\n\n*** potential candidates for the anaphora "
+                "'{0}' ({1}) in the sentence '{2}'"
+                "***\n".format(pocores._get_word(anaphora),
+                               anaphora, pocores._get_sentence(sent)))
+        for filter_name in results_dict.keys():
+            candidate_list, filter_description = results_dict[filter_name]
+            print "{0}:\n\t{1}\n".format(filter_description,
+                    pocores._get_wordlist(candidate_list, verbose=True))
+    # we need to return a list instead of a generator, because generators are
+    # considered ``True`` even if they're 'empty'!
+    return list(bound_cands)
+
+
 def distance(token_node_id1, token_node_id2):
     """
     Returns sentence distance between to given words.
