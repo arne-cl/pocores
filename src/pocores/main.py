@@ -185,8 +185,9 @@ class Pocores(object):
             self.entity_grid[sent_id] = defaultdict(list)
 
         for chain_index, coref_chain in enumerate(coref_chains):
-            for (token, node_id) in coref_chain:
-                sent_index = self.node_attrs(node_id)['sent_pos']
+            for (token, token_id) in coref_chain:
+                token_dict = self.node_attrs(token_id)
+                sent_index = token_dict['sent_pos']
                 deprel = token_dict[deprel_attrib]
                 self.entity_grid[sent_index][chain_index].append(deprel)
         return self.entity_grid, coref_chains
