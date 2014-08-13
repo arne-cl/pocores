@@ -42,12 +42,15 @@ def check_role(pocores, antecedent_id, role, deprel_attr='pdeprel'):
     return False
 
 
-def get_chain_length(pocores, antecedent):
+def get_chain_length(pocores, antecedent_id):
     """
     Returns the count of known mentions of the discourse referent of the
     given word.
     """
-    raise NotImplementedError
+    if antecedent_id in pocores.entities:
+        return len(pocores.entities[antecedent_id])
+    else:
+        return 0
 
 
 def get_depth(pocores, (sent, word)):
