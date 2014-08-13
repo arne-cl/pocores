@@ -1,19 +1,31 @@
 # -*- coding: utf-8 -*-
 
 
-def check_parallelism(pocores, (sent1, word1), (sent2, word2)):
+def check_parallelism(docgraph, antecedent_id, anaphora_id,
+                      deprel_attrib='pdeprel'):
     """
     Checks syntactical role parallelism between two given words.
 
-    :param (sent1, word1): a word index
-    :type (sent1, word1): (int, int) ``tuple``
-    :param (sent2, word2): a word index
-    :type (sent2, word2): (int, int) ``tuple``
+    Parameters
+    ----------
+    docgraph : ConllDocumentGraph
+        document graph which contains the token
+    antecedent_id : str
+        the node ID of the antecedent
+    anaphora_id : str
+        the node ID of the anaphora
 
-    :return: True if parallelism is found, False otherwise.
-    :rtype: ``boolean``
+    Returns
+    -------
+    parallel : bool
+    True, if parallelism is found, False otherwise.
     """
-    raise NotImplementedError
+    ant = docgraph.node[antecedent_id]
+    ana = docgraph.node[anaphora_id]
+    if (ant[deprel_attrib] == ana[deprel_attrib]
+       and ant[deprel_attrib] in ("SB", "OA", "DA")):
+        return True
+    return False
 
 
 def check_role(pocores, antecedent, role):
