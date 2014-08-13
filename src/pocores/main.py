@@ -75,7 +75,6 @@ class Pocores(object):
         Returns list of all known discourse entities.
 
         TODO: implement `self.entities`, issue #2
-        TODO: check if natural_sort_key also works for ``s1_t23``-like keys
 
         Returns
         -------
@@ -214,8 +213,8 @@ class Pocores(object):
             'There should be 7 weights, not {0}'.format(len(weights))
 
         # TODO: explain/show, why these structures have to be reset
-        self.entities.clear()
-        self.ana_to_ante.clear()
+        #~ self.entities.clear()
+        #~ self.ana_to_ante.clear()
 
         noun_tags = ("NN", "NE")
         pronoun_tags = ("PPER", "PRELS", "PRF", "PPOSAT", "PDS")
@@ -226,13 +225,19 @@ class Pocores(object):
                 # Treatment of Nominals
                 if (tok_attrs[pos_attrib] in noun_tags
                    and tok_attrs[deprel_attrib] != "PNC"):
-                    self._resolve_nominal_anaphora(token_id)
+                    print u"{3} nominal: {0} ({1} - {2})".format(tok_attrs['token'], tok_attrs[pos_attrib], tok_attrs[deprel_attrib], token_id)
+                    nom_res = self._resolve_nominal_anaphora(token_id)
+                    if nom_res != token_id:
+                        print u'\tresolved to {0} ({1})'.format(self.document.node[nom_res]['token'], nom_res)
 
                 # Treatment of Pronominals
-                elif (tok_attrs[pos_attrib] in pronoun_tags
-                      and not filters.is_expletive(self.document, token_id)):
-                    self._resolve_pronominal_anaphora(token_id, weights,
-                                                      max_sent_dist)
+                #~ elif (tok_attrs[pos_attrib] in pronoun_tags
+                      #~ and not filters.is_expletive(self.document, token_id)):
+                    #~ print u"{3} pronominal: {0} ({1} - {2})".format(tok_attrs['token'], tok_attrs[pos_attrib], tok_attrs[deprel_attrib], token_id)
+                    #~ pro_res = self._resolve_pronominal_anaphora(token_id, weights,
+                                                      #~ max_sent_dist)
+                    #~ if pro_res != token_id:
+                        #~ print u'\tresolved to {0} ({1})'.format(self.document.node[pro_res]['token'], pro_res)
 
     def _resolve_nominal_anaphora(self, anaphora):
         """
@@ -351,6 +356,50 @@ def traverse_dependencies_down(docgraph, node_id):
                 yield target_id
 
 
+def output_with_brackets(pocores):
+    """
+    Returns the input text annotated with the resolved discourse referents
+    (in brackets).
+
+    Example sentence:
+    Als [die übrigen Personen]_{154} mit Bediensteten der Justiz eintreten ,
+    um [Don Giovanni]_{1} zu verhaften , erzählt [ihnen]_{154}
+    [Leporello , was geschehen ist]_{4} .
+    """
+    raise NotImplementedError
+    return_str = ""
+
+    for i in pocores.sentence_dict:
+        # collect brackets
+        opening = {} # ( wordid:[ref_id, ref_id, ...] )
+        closing = {}
+        for j in pocores.sentence_dict[i]:
+            if (i, j) in pocores.ana_to_id and len(pocores.entities[pocores.ana_to_id[(i, j)]]) > 1:
+                kids = pocores._get_children((i, j))
+                if min(kids) not in opening:
+                    opening[min(kids)] = [pocores.ana_to_id[(i, j)]]
+                else:
+                    opening[min(kids)].insert(0, pocores.ana_to_id[(i, j)])
+                if max(kids) not in closing:
+                    closing[max(kids)] = [pocores.ana_to_id[(i, j)]]
+                else:
+                    closing[max(kids)].insert(0, pocores.ana_to_id[(i, j)])
+        # print
+        sent_str = ""
+        for j in pocores.sentence_dict[i]:
+            if j in opening:
+                for b in opening[j]:
+                    print ''
+                    sent_str += "["
+            sent_str += pocores.sentence_dict[i][j]["Form"]
+            if j in closing:
+                for b in closing[j]:
+                    sent_str += "]_{" + str(b) + "}"
+            sent_str += " "
+        return_str += sent_str + "\n"
+    return return_str
+
+
 def run_pocores_with_cli_arguments():
     parser, args = cli.parse_options()
     if args.input == None:
@@ -380,8 +429,8 @@ def run_pocores_with_cli_arguments():
     pocores.resolve_anaphora(weights, max_sent_dist)
 
     # currently, there's only one output format
-    if args.outformat == 'bracketed':
-        args.output_file.write(output_with_brackets(pocores))
+    #~ if args.outformat == 'bracketed':
+        #~ args.output_file.write(output_with_brackets(pocores))
 
 
 if __name__ == '__main__':
