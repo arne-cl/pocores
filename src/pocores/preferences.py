@@ -16,18 +16,6 @@ def check_parallelism(pocores, (sent1, word1), (sent2, word2)):
     raise NotImplementedError
 
 
-def get_distance((sent1, word1), (sent2, word2)):
-    """
-    Returns sentence distance between to given words.
-
-    >>> get_distance((1, 2), (5, 4))
-    4
-    >>> get_distance((1, 2), (1, 9))
-    0
-    """
-    raise NotImplementedError
-
-
 def check_role(pocores, antecedent, role):
     """
     Checks if a given word has a given syntactic role.

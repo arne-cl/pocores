@@ -36,6 +36,15 @@ def get_filtered_candidates(pocores, cand_list, (sent, word), sentence_dist,
         list of likely antecedents, represented as
         (sentence index, word index) tuples
     """
+def get_distance((sent1, word1), (sent2, word2)):
+    """
+    Returns sentence distance between to given words.
+
+    >>> get_distance((1, 2), (5, 4))
+    4
+    >>> get_distance((1, 2), (1, 9))
+    0
+    """
     raise NotImplementedError
 
 
