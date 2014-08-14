@@ -267,7 +267,7 @@ def tokentuple2id(sent_pos, word_pos):
 
 
 def is_coreferent(pocores, antecedent, anaphora,
-                  lemma_attrib='plemma'):
+                  lemma_attrib='lemma'):
     """
     So far: checks if two words have the same lemma. (We're using this for
     basic anaphora resolution.)
