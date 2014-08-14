@@ -96,7 +96,7 @@ def distance(token_node_id1, token_node_id2):
     return abs(sent1 - sent2)
 
 
-def morph_agreement(docgraph, antecedent_node, anaphora_node):
+def morph_agreement(pocores, antecedent_node, anaphora_node):
     """
     Checks if an anaphora and a potential antecedent have morphological
     agreement.
@@ -105,8 +105,8 @@ def morph_agreement(docgraph, antecedent_node, anaphora_node):
 
     Parameters
     ----------
-    docgraph : ConllDocumentGraph
-        document graph which contains the token
+    pocores : Pocores
+        an instance of the Pocores class
     antecedent_node : str
         the node ID of the antecedent
     anaphora_node : str
@@ -117,8 +117,8 @@ def morph_agreement(docgraph, antecedent_node, anaphora_node):
     agreement : bool
         True, iff there's morphological agreement between the two tokens
     """
-    antecedent = docgraph.node[antecedent_node]
-    anaphora = docgraph.node[anaphora_node]
+    antecedent = pocores.node_attrs(antecedent_node)
+    anaphora = pocores.node_attrs(anaphora_node)
 
     def feature_agreement(antecedent_dict, anaphora_dict, feat):
         """
