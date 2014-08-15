@@ -45,9 +45,11 @@ class Pocores(object):
     def __init__(self, document_graph):
         self.document = document_graph
 
-        # TODO: explain self.entities ???
-        # entities maps from a token ID (str) to a list of token IDs
-        self.entities = defaultdict(str)
+        # maps from a token node ID (i.e. the first mention of an entity
+        # in the text) to a list of token node IDs (i.e. all mentions of
+        # that entity in the text, incl. the first one)
+        self.entities = defaultdict(list)
+
 
         # ana_to_ante maps from an anaphora token ID (str) to an
         # antecedent token ID (str)
