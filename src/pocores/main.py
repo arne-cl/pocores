@@ -245,7 +245,7 @@ class Pocores(object):
 
                 # Treatment of Pronominals
                 #~ elif (tok_attrs[pos_attrib] in pronoun_tags
-                      #~ and not filters.is_expletive(self.document, token_id)):
+                      #~ and not filters.is_expletive(self, token_id)):
                     #~ print u"{3} pronominal: {0} ({1} - {2})".format(tok_attrs['token'], tok_attrs[pos_attrib], tok_attrs[deprel_attrib], token_id)
                     #~ pro_res = self._resolve_pronominal_anaphora(token_id, weights,
                                                       #~ max_sent_dist)
