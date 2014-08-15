@@ -345,7 +345,7 @@ class Pocores(object):
                 if prefs.check_role(self, can, "DA"):
                     candidate_dict[can] += weights[3]
                 candidate_dict[can] += weights[4] * math.log(prefs.get_chain_length(self, can))
-                candidate_dict[can] -= weights[5] * prefs.get_distance(can, anaphora)
+                candidate_dict[can] -= weights[5] * filters.distance(can, anaphora)
                 candidate_dict[can] -= weights[6] * prefs.get_depth(self, can)
                 # NOTE: additional preferences can be added here
 
