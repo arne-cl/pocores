@@ -226,10 +226,7 @@ def is_bound(pocores, antecedent_id, anaphora_id,
             if pocores.node_attrs(token_id)[deprel_attrib] in ("PUNC", "CD"):
                 end = word_pos
                 break
-
-        left_limit = tokentuple2id(ana_sent_id, begin)
-        right_limit = tokentuple2id(ana_sent_id, end)
-        return (left_limit, right_limit)
+        return (begin, end)
 
     left_limit, right_limit = anaphora_boundaries(anaphora, deprel_attrib,
                                                   pos_attrib)
