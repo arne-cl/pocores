@@ -58,4 +58,4 @@ def get_depth(pocores, token_id):
     Returns number of dependency edges from a given word to root of the
     sentence.
     """
-    return len(traverse_dependencies_up(pocores.document, token_id))
+    return len(list(traverse_dependencies_up(pocores.document, token_id)))
