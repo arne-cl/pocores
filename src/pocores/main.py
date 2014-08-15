@@ -50,6 +50,10 @@ class Pocores(object):
         # that entity in the text, incl. the first one)
         self.entities = defaultdict(list)
 
+        # maps from a mention (i.e. a token node ID) to an entity (i.e. a
+        # token node ID that represents the first mention of that entity in the
+        # text)
+        self.mentions = {}
 
         # ana_to_ante maps from an anaphora token ID (str) to an
         # antecedent token ID (str)
