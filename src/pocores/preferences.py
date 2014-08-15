@@ -49,10 +49,8 @@ def get_chain_length(pocores, antecedent_id):
     Returns the count of known mentions of the discourse referent of the
     given word.
     """
-    if antecedent_id in pocores.entities:
-        return len(pocores.entities[antecedent_id])
-    else:
-        return 0
+    first_mention = pocores.mentions[antecedent_id]
+    return len(pocores.entities[first_mention])
 
 
 def get_depth(pocores, token_id):
