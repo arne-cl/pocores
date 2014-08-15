@@ -45,9 +45,15 @@ class Pocores(object):
     def __init__(self, document_graph):
         self.document = document_graph
 
-        # TODO: explain self.entities ???
-        # entities maps from a token ID (str) to a list of token IDs
-        self.entities = defaultdict(str)
+        # maps from a token node ID (i.e. the first mention of an entity
+        # in the text) to a list of token node IDs (i.e. all mentions of
+        # that entity in the text, incl. the first one)
+        self.entities = defaultdict(list)
+
+        # maps from a mention (i.e. a token node ID) to an entity (i.e. a
+        # token node ID that represents the first mention of that entity in the
+        # text)
+        self.mentions = {}
 
         # ana_to_ante maps from an anaphora token ID (str) to an
         # antecedent token ID (str)
@@ -269,11 +275,15 @@ class Pocores(object):
         candidates_list.reverse()
         for antecedent in candidates_list:
             if filters.is_coreferent(self, antecedent, anaphora):
-                self.entities[antecedent].append(anaphora)
-                return antecedent
+                print "{0} and {1} are coreferent".format(antecedent, anaphora)
+                first_mention = self.mentions[antecedent]
+                self.entities[first_mention].append(anaphora)
+                self.mentions[anaphora] = first_mention
+                return first_mention
 
-        if anaphora not in self.entities:
-            self.entities[anaphora] = []
+        if anaphora not in self.mentions:
+            self.entities[anaphora] = [anaphora]
+            self.mentions[anaphora] = anaphora
             return anaphora
 
     def _resolve_pronominal_anaphora(self, anaphora, weights, max_sent_dist,
@@ -311,7 +321,7 @@ class Pocores(object):
                                                               max_sent_dist)
 
         if not filtered_candidates:
-            self.entities[anaphora] = []
+            self.entities[anaphora] = [anaphora]
             return anaphora
 
         # Preferences
@@ -352,8 +362,10 @@ class Pocores(object):
 
         # Store Result
         self.ana_to_ante[anaphora] = antecedent  # for Evaluation
-        self.entities[antecedent].append(anaphora)
-        return antecedent
+        first_mention = self.mentions[antecedent]
+        self.entities[first_mention].append(anaphora)
+        self.mentions[anaphora] = first_mention
+        return first_mention
 
 
 def traverse_dependencies_down(docgraph, node_id):
