@@ -330,9 +330,9 @@ class Pocores(object):
         if anaphora_pos in set(["PRELS", "PDS"]):
             # chooses the most recent candidate, if the word is a substitutive
             # demonstrative/relative pronoun
-            can = max(candidate_dict)
+            antecedent = max(candidate_dict)
 
-        if anaphora_pos in set(["PPER", "PRF", "PPOSAT"]):
+        elif anaphora_pos in set(["PPER", "PRF", "PPOSAT"]):
             # scores the candidates, if the word is a personal pronoun or an
             # attributive possessive pronoun
             for can in candidate_dict:
