@@ -77,6 +77,12 @@ class Pocores(object):
         # TODO: write entity grid description
         self.entity_grid = {}
 
+    def node_attrs(self, token_node_id):
+        """
+        returns the attribute dictionary of a token, given its node ID.
+        """
+        return self.document.node[token_node_id]
+
     def _get_candidates(self):
         """
         Returns list of all known discourse entities.
