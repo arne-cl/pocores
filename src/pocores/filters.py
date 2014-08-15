@@ -263,8 +263,8 @@ def tokentuple2id(sent_pos, word_pos):
     return 's{}_t{}'.format(sent_pos, word_pos)
 
 
-def is_coreferent(docgraph, antecedent, anaphora,
-                  lemma_attrib='plemma'):
+def is_coreferent(pocores, antecedent, anaphora,
+                  lemma_attrib='lemma'):
     """
     So far: checks if two words have the same lemma. (We're using this for
     basic anaphora resolution.)
@@ -273,8 +273,8 @@ def is_coreferent(docgraph, antecedent, anaphora,
 
     Paramters
     ---------
-    docgraph : ConllDocumentGraph
-        document graph which contains the token
+    pocores : Pocores
+        an instance of the Pocores class
     antecedent : str
         the node ID of the antecedent
     anaphora : str
@@ -290,8 +290,8 @@ def is_coreferent(docgraph, antecedent, anaphora,
         True, if antecedent and anaphora share the same lemma. False
         otherwise.
     """
-    return docgraph.node[antecedent][lemma_attrib] == \
-        docgraph.node[anaphora][lemma_attrib]
+    return pocores.node_attrs(antecedent)[lemma_attrib] == \
+        pocores.node_attrs(anaphora)[lemma_attrib]
 
 
 def is_expletive(docgraph, token_node, lemma_attrib='plemma'):
