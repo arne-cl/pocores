@@ -294,14 +294,14 @@ def is_coreferent(pocores, antecedent, anaphora,
         pocores.node_attrs(anaphora)[lemma_attrib]
 
 
-def is_expletive(docgraph, token_node, lemma_attrib='plemma'):
+def is_expletive(pocores, token_node, lemma_attrib='lemma'):
     """
     Checks if a given token is an expletive.
 
     Paramters
     ---------
-    docgraph : ConllDocumentGraph
-        document graph which contains the token
+    pocores : Pocores
+        an instance of the Pocores class
     token_node : str
         the node ID of the token
     lemma_attrib : str
@@ -313,8 +313,8 @@ def is_expletive(docgraph, token_node, lemma_attrib='plemma'):
     -------
     is_expletive : bool
     """
-    if docgraph.get_token(token_node) in (u'es', u'Es'):
-        for lemma in traverse_dependencies_up(docgraph, token_node,
+    if pocores.document.get_token(token_node) in (u'es', u'Es'):
+        for lemma in traverse_dependencies_up(pocores.document, token_node,
                                               node_attribute=lemma_attrib):
             if lemma in EXPLETIVE_VERBS:
                 return True
