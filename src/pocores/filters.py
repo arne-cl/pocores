@@ -154,7 +154,7 @@ def morph_agreement(pocores, antecedent_node, anaphora_node):
     return True
 
 
-def is_bound(pocores, entity_map, antecedent_id, anaphora_id,
+def is_bound(pocores, antecedent_id, anaphora_id,
              deprel_attrib='pdeprel', pos_attrib='ppos'):
     """
     Checks if two words can be anaphora and antecedent by the binding
@@ -180,8 +180,7 @@ def is_bound(pocores, entity_map, antecedent_id, anaphora_id,
     antecedent = pocores.node_attrs(antecedent_id)
     anaphora = pocores.node_attrs(anaphora_id)
 
-    def anaphora_boundaries(anaphora, entity_map, deprel_attrib,
-                            pos_attrib):
+    def anaphora_boundaries(anaphora, deprel_attrib, pos_attrib):
         """
         TODO: describe binding categories better
 
@@ -205,7 +204,7 @@ def is_bound(pocores, entity_map, antecedent_id, anaphora_id,
         """
         ana_sent_id, ana_word_pos = anaphora['sent_pos'], anaphora['word_pos']
         sent_length = \
-            len(pocores.node_attrs('s{}'.format(ana_sent_id)['tokens']))
+            len( pocores.node_attrs('s{}'.format(ana_sent_id))['tokens'] )
 
         begin = 1
         end = sent_length
@@ -232,7 +231,8 @@ def is_bound(pocores, entity_map, antecedent_id, anaphora_id,
         right_limit = tokentuple2id(ana_sent_id, end)
         return (left_limit, right_limit)
 
-    left_limit, right_limit = anaphora_boundaries(anaphora, deprel_attrib)
+    left_limit, right_limit = anaphora_boundaries(anaphora, deprel_attrib,
+                                                  pos_attrib)
 
     # binding principle 1
     if anaphora[pos_attrib] == "PRF":
@@ -243,7 +243,7 @@ def is_bound(pocores, entity_map, antecedent_id, anaphora_id,
     # binding principle 2
     if (anaphora[pos_attrib] == "PPER"
        and antecedent[pos_attrib] not in ("PRF", "PPOSAT")):
-        for candidate_id in entity_map[antecedent_id]:
+        for candidate_id in pocores.entities[antecedent_id]:
             candidate = pocores.node_attrs(candidate_id)
             if ((anaphora['sent_pos'] == candidate['sent_pos'])
                and (candidate['word_pos'] in range(left_limit, right_limit))):
@@ -251,7 +251,7 @@ def is_bound(pocores, entity_map, antecedent_id, anaphora_id,
 
     # binding principle 3
     if anaphora[pos_attrib] in ("NN", "NE"):
-        for candidate_id in entity_map[antecedent_id]:
+        for candidate_id in pocores.entities[antecedent_id]:
             candidate = pocores.node_attrs(candidate_id)
             if anaphora['sent_pos'] == candidate['sent_pos']:
                 return False
