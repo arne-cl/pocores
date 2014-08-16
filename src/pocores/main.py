@@ -374,6 +374,53 @@ def traverse_dependencies_down(docgraph, node_id):
                 yield target_id
 
 
+def output_with_brackets(pocores):
+    """
+    Returns the input text annotated with the resolved discourse referents
+    (in brackets).
+
+    Example sentence:
+    Als [die übrigen Personen]_{154} mit Bediensteten der Justiz eintreten ,
+    um [Don Giovanni]_{1} zu verhaften , erzählt [ihnen]_{154}
+    [Leporello , was geschehen ist]_{4} .
+    """
+    return_str = ""
+
+    for sent_id in pocores.document.sentences:
+        # collect brackets
+        opening = {}  # ( wordid:[ref_id, ref_id, ...] )
+        closing = {}
+        token_ids = pocores.node_attrs(sent_id)['tokens']
+        for token_id in token_ids:
+            first_mention = pocores.mentions.get(token_id)
+            if first_mention and len(pocores.entities[first_mention]) > 1:
+                children = pocores._get_children(token_id)
+                first_token = mintok(children)
+                if first_token not in opening:
+                    opening[first_token] = [first_mention]
+                else:
+                    opening[first_token].insert(0, first_mention)
+                last_token = maxtok(children)
+                if last_token not in closing:
+                    closing[last_token] = [first_mention]
+                else:
+                    closing[last_token].insert(0, first_mention)
+        # print
+        sent_str = ""
+        for token_id in token_ids:  # iterate over tokens in sentence
+            if token_id in opening:
+                for mention_id in opening[token_id]:
+                    print ''
+                    sent_str += "["
+            sent_str += pocores.node_attrs(token_id)['token']
+            if token_id in closing:
+                for mention_id in closing[token_id]:
+                    sent_str += "]_{" + mention_id + "}"
+            sent_str += " "
+        return_str += sent_str + "\n"
+    return return_str
+
+
 def run_pocores_with_cli_arguments():
     parser, args = cli.parse_options()
     if args.input == None:
@@ -405,6 +452,22 @@ def run_pocores_with_cli_arguments():
     # currently, there's only one output format
     if args.outformat == 'bracketed':
         args.output_file.write(output_with_brackets(pocores))
+
+
+def mintok(token_ids):
+    """
+    given a list of token node IDs, returns the token node ID of the token that
+    occurs first in the text.
+    """
+    return min(token_ids, key=natural_sort_key)
+
+
+def maxtok(token_ids):
+    """
+    given a list of token node IDs, returns the token node ID of the token that
+    occurs last in the text.
+    """
+    return max(token_ids, key=natural_sort_key)
 
 
 if __name__ == '__main__':
