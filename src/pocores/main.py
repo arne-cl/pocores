@@ -423,7 +423,7 @@ def output_with_brackets(pocores):
 
 def run_pocores_with_cli_arguments():
     parser, args = cli.parse_options()
-    if args.input == None:
+    if args.input is None:
         parser.print_help()
         sys.exit(0)
     assert args.informat in ('2009', '2010')
@@ -433,7 +433,7 @@ def run_pocores_with_cli_arguments():
     pocores = Pocores(docgraph)
 
     weights = WEIGHTS
-    if args.weights: # if set, use command line weights.
+    if args.weights:  # if set, use command line weights.
         weight_str_list = args.weights.split(',')
         try:
             weights = [int(weight) for weight in weight_str_list]
@@ -441,7 +441,7 @@ def run_pocores_with_cli_arguments():
             print "Can't convert all weights to integers. {0}".format(e)
 
     max_sent_dist = MAX_SENT_DIST
-    if args.max_sent_dist: # if set, use sentence distance set via cli
+    if args.max_sent_dist:  # if set, use sentence distance set via cli
         try:
             max_sent_dist = int(args.max_sent_dist)
         except ValueError as e:
@@ -472,7 +472,7 @@ def maxtok(token_ids):
 
 if __name__ == '__main__':
     """
-    parses command line arguments, runs coreference analysis and produdes output
-    (stdout or file(s)).
+    parses command line arguments, runs coreference analysis and produdes
+    output (stdout or file(s)).
     """
     run_pocores_with_cli_arguments()
