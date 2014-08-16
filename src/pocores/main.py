@@ -386,35 +386,38 @@ def output_with_brackets(pocores):
     um [Don Giovanni]_{1} zu verhaften , erzählt [ihnen]_{154}
     [Leporello , was geschehen ist]_{4} .
     """
-    raise NotImplementedError
     return_str = ""
 
-    for i in pocores.sentence_dict:
+    for sent_id in pocores.document.sentences:
         # collect brackets
         opening = {}  # ( wordid:[ref_id, ref_id, ...] )
         closing = {}
-        for j in pocores.sentence_dict[i]:
-            if (i, j) in pocores.ana_to_id and len(pocores.entities[pocores.ana_to_id[(i, j)]]) > 1:
-                kids = pocores._get_children((i, j))
-                if min(kids) not in opening:
-                    opening[min(kids)] = [pocores.ana_to_id[(i, j)]]
+        token_ids = pocores.node_attrs(sent_id)['tokens']
+        for token_id in token_ids:
+            first_mention = pocores.mentions.get(token_id)
+            if first_mention and len(pocores.entities[first_mention]) > 1:
+                children = pocores._get_children(token_id)
+                first_token = mintok(children)
+                if first_token not in opening:
+                    opening[first_token] = [first_mention]
                 else:
-                    opening[min(kids)].insert(0, pocores.ana_to_id[(i, j)])
-                if max(kids) not in closing:
-                    closing[max(kids)] = [pocores.ana_to_id[(i, j)]]
+                    opening[first_token].insert(0, first_mention)
+                last_token = maxtok(children)
+                if last_token not in closing:
+                    closing[last_token] = [first_mention]
                 else:
-                    closing[max(kids)].insert(0, pocores.ana_to_id[(i, j)])
+                    closing[last_token].insert(0, first_mention)
         # print
         sent_str = ""
-        for j in pocores.sentence_dict[i]:
-            if j in opening:
-                for b in opening[j]:
+        for token_id in token_ids:  # iterate over tokens in sentence
+            if token_id in opening:
+                for mention_id in opening[token_id]:
                     print ''
                     sent_str += "["
-            sent_str += pocores.sentence_dict[i][j]["Form"]
-            if j in closing:
-                for b in closing[j]:
-                    sent_str += "]_{" + str(b) + "}"
+            sent_str += pocores.node_attrs(token_id)['token']
+            if token_id in closing:
+                for mention_id in closing[token_id]:
+                    sent_str += "]_{" + mention_id + "}"
             sent_str += " "
         return_str += sent_str + "\n"
     return return_str
@@ -449,8 +452,15 @@ def run_pocores_with_cli_arguments():
     pocores.resolve_anaphora(weights, max_sent_dist)
 
     # currently, there's only one output format
-    #~ if args.outformat == 'bracketed':
-        #~ args.output_file.write(output_with_brackets(pocores))
+    if args.outformat == 'bracketed':
+        args.output_file.write(output_with_brackets(pocores))
+
+
+def mintok(token_ids):
+    return min(token_ids, key=natural_sort_key)
+
+def maxtok(token_ids):
+    return max(token_ids, key=natural_sort_key)
 
 
 if __name__ == '__main__':
