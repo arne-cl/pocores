@@ -231,8 +231,8 @@ class Pocores(object):
         pronoun_tags = ("PPER", "PRELS", "PRF", "PPOSAT", "PDS")
 
         for sent_id in self.document.sentences:
-            for token_id in self.document.node[sent_id]['tokens']:
-                tok_attrs = self.document.node[token_id]
+            for token_id in self.node_attrs(sent_id)['tokens']:
+                tok_attrs = self.node_attrs(token_id)
                 # Treatment of Nominals
                 if (tok_attrs[pos_attrib] in noun_tags
                    and tok_attrs[deprel_attrib] != "PNC"):
@@ -240,7 +240,7 @@ class Pocores(object):
 
                 # Treatment of Pronominals
                 elif (tok_attrs[pos_attrib] in pronoun_tags
-                      and not filters.is_expletive(self.document, token_id)):
+                      and not filters.is_expletive(self, token_id)):
                     self._resolve_pronominal_anaphora(token_id, weights,
                                                       max_sent_dist)
 
