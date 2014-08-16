@@ -31,11 +31,17 @@ def check_parallelism(pocores, antecedent_id, anaphora_id,
     return False
 
 
-def check_role(pocores, antecedent, role):
+def check_role(pocores, antecedent_id, role, deprel_attr='pdeprel'):
     """
-    Checks if a given word has a given syntactic role.
+    Checks if a given word has a certain syntactic role.
+
+    antecedent_id : str
+        the node ID of the antecedent
     """
-    raise NotImplementedError
+    ant = pocores.node_attrs(antecedent_id)
+    if ant[deprel_attr] == role:
+        return True
+    return False
 
 
 def get_chain_length(pocores, antecedent_id):
