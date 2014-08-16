@@ -323,6 +323,7 @@ class Pocores(object):
 
         if not filtered_candidates:
             self.entities[anaphora] = [anaphora]
+            self.mentions[anaphora] = anaphora
             return anaphora
 
         # Preferences
