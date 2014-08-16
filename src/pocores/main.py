@@ -88,7 +88,6 @@ class Pocores(object):
         Returns list of all known discourse entities.
 
         TODO: implement `self.entities`, issue #2
-        TODO: check if natural_sort_key also works for ``s1_t23``-like keys
 
         Returns
         -------
@@ -143,7 +142,7 @@ class Pocores(object):
         """
         assert isinstance(sent_id, (int, str))
         sid = sent_id if isinstance(sent_id, str) else 's{}'.format(sent_id)
-        return tokens2text(self.document, self.document.node[sid]['tokens'])
+        return tokens2text(self.document, self.node_attrs(sid)['tokens'])
 
     def _get_coref_chains(self):
         """
