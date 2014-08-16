@@ -267,11 +267,14 @@ class Pocores(object):
         candidates_list.reverse()
         for antecedent in candidates_list:
             if filters.is_coreferent(self, antecedent, anaphora):
-                self.entities[antecedent].append(anaphora)
-                return antecedent
+                first_mention = self.mentions[antecedent]
+                self.entities[first_mention].append(anaphora)
+                self.mentions[anaphora] = first_mention
+                return first_mention
 
-        if anaphora not in self.entities:
-            self.entities[anaphora] = []
+        if anaphora not in self.mentions:
+            self.entities[anaphora] = [anaphora]
+            self.mentions[anaphora] = anaphora
             return anaphora
 
     def _resolve_pronominal_anaphora(self, anaphora, weights, max_sent_dist, pos_attrib='ppos'):
