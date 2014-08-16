@@ -165,15 +165,13 @@ class Pocores(object):
         """
         prints all coreference chains, including the grammatical function of
         anaphora and potential antecedents.
-
-        TODO: implement self.entities; issue #2
         """
         for coref_chain in self._get_coref_chains():
             if len(coref_chain) >= min_coref_chain_length:
                 # node ID of the first token in the chain
                 print "\n\nEntity '{0}':".format(coref_chain[0][1])
                 for (token, node_id) in coref_chain:
-                    token_dict = self.document.node[node_id]
+                    token_dict = self.node_attrs(node_id)
                     sent_index = token_dict['sent_pos']
                     deprel = token_dict[deprel_attrib]
                     print ("\t{0} in sentence {1} with function "
@@ -192,8 +190,8 @@ class Pocores(object):
             self.entity_grid[sent_id] = defaultdict(list)
 
         for chain_index, coref_chain in enumerate(coref_chains):
-            for (token, node_id) in coref_chain:
-                token_dict = self.document.node[node_id]
+            for (token, token_id) in coref_chain:
+                token_dict = self.node_attrs(token_id)
                 sent_index = token_dict['sent_pos']
                 deprel = token_dict[deprel_attrib]
                 self.entity_grid[sent_index][chain_index].append(deprel)
