@@ -238,20 +238,13 @@ class Pocores(object):
                 # Treatment of Nominals
                 if (tok_attrs[pos_attrib] in noun_tags
                    and tok_attrs[deprel_attrib] != "PNC"):
-                    print u"{3} nominal: {0} ({1} - {2})".format(tok_attrs['token'], tok_attrs[pos_attrib], tok_attrs[deprel_attrib], token_id)
-                    nom_res = self._resolve_nominal_anaphora(token_id)
-                    if nom_res != token_id:
-                        print u'\tresolved to {0} ({1})'.format(self.node_attrs(nom_res)['token'], nom_res)
+                    self._resolve_nominal_anaphora(token_id)
 
                 # Treatment of Pronominals
                 elif (tok_attrs[pos_attrib] in pronoun_tags
                       and not filters.is_expletive(self, token_id)):
-                    print u"{3} pronominal: {0} ({1} - {2})".format(tok_attrs['token'], tok_attrs[pos_attrib], tok_attrs[deprel_attrib], token_id)
-                    pro_res = self._resolve_pronominal_anaphora(token_id, weights,
+                    self._resolve_pronominal_anaphora(token_id, weights,
                                                       max_sent_dist)
-                    if pro_res != token_id:
-                        print u'\tresolved to {0} ({1})'.format(self.node_attrs(pro_res)['token'], pro_res)
-
 
     def _resolve_nominal_anaphora(self, anaphora):
         """
@@ -276,7 +269,6 @@ class Pocores(object):
         candidates_list.reverse()
         for antecedent in candidates_list:
             if filters.is_coreferent(self, antecedent, anaphora):
-                print "{0} and {1} are coreferent".format(antecedent, anaphora)
                 first_mention = self.mentions[antecedent]
                 self.entities[first_mention].append(anaphora)
                 self.mentions[anaphora] = first_mention
