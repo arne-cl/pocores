@@ -421,6 +421,45 @@ def output_with_brackets(pocores):
     return return_str
 
 
+def brat_output(pocores):
+    ret_str = u''
+    cid = 1
+    candidates_to_cid = {}
+    for can in pocores._get_candidates():
+        candidates_to_cid[can] = cid
+        cid += 1
+
+    onset = 0
+    for i, token_id in enumerate(pocores.document.tokens):
+        tok_len = len(pocores._get_word(token_id))
+        if token_id in pocores.mentions:
+            ret_str += u"T{}\tMention {} {}\t{}\n".format(candidates_to_cid[token_id], onset, onset+tok_len,
+                                                        pocores._get_word(token_id))
+        onset += tok_len+1
+
+    relation = 1
+    for entity, mentions in pocores.entities.iteritems():
+        if len(mentions) > 1:
+            reversed_mentions = list(reversed(mentions))
+            for i, mention in enumerate(reversed_mentions[:-1]):
+                ret_str += "R{}\tCoreference Anaphora:T{} Antecedent:T{}\n".format(relation, candidates_to_cid[mention],
+                                                                            candidates_to_cid[reversed_mentions[i+1]])
+                relation += 1
+    return ret_str
+
+
+def write_brat(pocores, output_dir):
+    import os
+    import codecs
+    from discoursegraphs import get_text
+    from discoursegraphs.util import create_dir
+    create_dir(output_dir)
+    with codecs.open(os.path.join(output_dir, pocores.document.name+'.txt'), 'wb', encoding='utf-8') as txtfile:
+        txtfile.write(get_text(pocores.document))
+    with codecs.open(os.path.join(output_dir, pocores.document.name+'.ann'), 'wb', encoding='utf-8') as annfile:
+        annfile.write(brat_output(pocores))
+
+
 def run_pocores_with_cli_arguments():
     parser, args = cli.parse_options()
     if args.input is None:
