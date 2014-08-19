@@ -8,7 +8,7 @@ Originally written by Tobias Günther.
 
 Copyright (C) 2011 Tobias Günther, Christian Dittrich.
 Copyright (C) 2012 Jonathan Sonntag, Arne Neumann.
-Copyright (C) 2014 Arne Neumann. (major rewrite)
+Copyright (C) 2014 Arne Neumann. (major rewrite using discoursegraphs library)
 
 This program is free software;
 you can redistribute it and/or modify it under the terms of the
@@ -24,12 +24,14 @@ You should have received a copy of the GNU General Public License along with
 this program; if not, see <http://www.gnu.org/licenses/>.
 """
 
+import os
+import codecs
 import sys
 import math
 from collections import defaultdict, OrderedDict
 
-from discoursegraphs import EdgeTypes, tokens2text
-from discoursegraphs.util import natural_sort_key
+from discoursegraphs import EdgeTypes, get_text, tokens2text
+from discoursegraphs.util import natural_sort_key, create_dir
 from discoursegraphs.readwrite import ConllDocumentGraph
 
 from pocores import cli, filters
@@ -86,8 +88,6 @@ class Pocores(object):
     def _get_candidates(self):
         """
         Returns list of all known discourse entities.
-
-        TODO: implement `self.entities`, issue #2
 
         Returns
         -------
@@ -449,10 +449,6 @@ def brat_output(pocores):
 
 
 def write_brat(pocores, output_dir):
-    import os
-    import codecs
-    from discoursegraphs import get_text
-    from discoursegraphs.util import create_dir
     create_dir(output_dir)
     with codecs.open(os.path.join(output_dir, pocores.document.name+'.txt'), 'wb', encoding='utf-8') as txtfile:
         txtfile.write(get_text(pocores.document))
