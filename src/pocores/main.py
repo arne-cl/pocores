@@ -466,7 +466,7 @@ def run_pocores_with_cli_arguments():
         parser.print_help()
         sys.exit(0)
     assert args.informat in ('2009', '2010')
-    assert args.outformat in ('bracketed')
+    assert args.outformat in ('bracketed', 'brat')
 
     docgraph = ConllDocumentGraph(args.input, conll_format=args.informat)
     pocores = Pocores(docgraph)
@@ -488,9 +488,10 @@ def run_pocores_with_cli_arguments():
 
     pocores.resolve_anaphora(weights, max_sent_dist)
 
-    # currently, there's only one output format
     if args.outformat == 'bracketed':
         args.output_file.write(output_with_brackets(pocores))
+    else:
+        write_brat(pocores, args.output_file)
 
 
 def mintok(token_ids):

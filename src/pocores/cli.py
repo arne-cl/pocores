@@ -37,13 +37,13 @@ def parse_options():
     output_options = parser.add_argument_group("Output Options",
         "These options allow you to specify various output options")
     output_options.add_argument('-o', '--output', dest='output_file',
-        nargs='?', type=file, default=sys.stdout,
-        help=('Specify the output file to write to.'),
+        nargs='?', default=sys.stdout,
+        help=('Specify the output file (output folder in case of brat) to write to.'),
         metavar='FILENAME')
     output_options.add_argument('-f', '--output_format', dest='outformat',
         default='bracketed',
         help=('Specify format the output shall be printed in. Format can be one'
-        ' of the following: bracketed'),
+        ' of the following: bracketed, brat'),
         metavar='OUTFORMAT')
 
     return parser, parser.parse_args(sys.argv[1:])
