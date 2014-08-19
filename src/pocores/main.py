@@ -30,13 +30,14 @@ import sys
 import math
 from collections import defaultdict, OrderedDict
 
+import brewer2mpl
+from unidecode import unidecode
 from discoursegraphs import EdgeTypes, get_text, tokens2text
 from discoursegraphs.util import natural_sort_key, create_dir
 from discoursegraphs.readwrite import ConllDocumentGraph
 
 from pocores import cli, filters
 from pocores import preferences as prefs
-
 
 # TODO: evaluate weights
 WEIGHTS = [8, 2, 8, 3, 2, 7, 0]
@@ -433,18 +434,45 @@ def brat_output(pocores):
     for i, token_id in enumerate(pocores.document.tokens):
         tok_len = len(pocores._get_word(token_id))
         if token_id in pocores.mentions:
-            ret_str += u"T{}\tMention {} {}\t{}\n".format(candidates_to_cid[token_id], onset, onset+tok_len,
-                                                        pocores._get_word(token_id))
+            entity_str = unidecode(pocores._get_word(pocores.mentions[token_id]))
+            ret_str += u"T{}\t{} {} {}\t{}\n".format(candidates_to_cid[token_id],
+                                                               entity_str, onset, onset+tok_len,
+                                                               pocores._get_word(token_id))
         onset += tok_len+1
+    return ret_str
 
-    relation = 1
-    for entity, mentions in pocores.entities.iteritems():
-        if len(mentions) > 1:
-            reversed_mentions = list(reversed(mentions))
-            for i, mention in enumerate(reversed_mentions[:-1]):
-                ret_str += "R{}\tCoreference Anaphora:T{} Antecedent:T{}\n".format(relation, candidates_to_cid[mention],
-                                                                            candidates_to_cid[reversed_mentions[i+1]])
-                relation += 1
+
+def create_annotation_conf(pocores):
+    """
+    creates a brat annotation.conf file (as a string)
+    for the given pocores instance.
+    """
+    ret_str = '[entities]\n\n'
+    unique_entities = {pocores._get_word(eid) for eid in pocores.entities}
+    for entity in unique_entities:
+        ret_str += unidecode(entity) + '\n'
+    ret_str += '\n[relations]\n\n[events]\n\n[attributes]'
+    return ret_str
+
+
+def create_visual_conf(pocores):
+    """
+    creates a visual.conf file (as a string)
+    for the given pocores instance.
+    """
+    ret_str = u'[drawing]\n\n'
+    num_of_entities = len(pocores.entities)
+    mapsize = min(num_of_entities, 12)
+    colormap = brewer2mpl.get_map('Paired', 'Qualitative', mapsize)
+    color_ids = range(mapsize) * int(math.ceil(num_of_entities / float(mapsize)))
+
+    for i, entity_id in enumerate(sorted(pocores.entities, key=natural_sort_key)):
+        # TODO: check why there are empty entities at all
+        if pocores.entities[entity_id]:
+            background_color = colormap.hex_colors[color_ids[i]]
+            ascii_entity = unidecode(pocores._get_word(entity_id))
+            ret_str += u'{}\tbgColor:{}\n'.format(ascii_entity, background_color)
+    ret_str += '\n[labels]'
     return ret_str
 
 
@@ -452,6 +480,10 @@ def write_brat(pocores, output_dir):
     create_dir(output_dir)
     with codecs.open(os.path.join(output_dir, pocores.document.name+'.txt'), 'wb', encoding='utf-8') as txtfile:
         txtfile.write(get_text(pocores.document))
+    with codecs.open(os.path.join(output_dir, 'annotation.conf'), 'wb', encoding='utf-8') as annotation_conf:
+        annotation_conf.write(create_annotation_conf(pocores))
+    with codecs.open(os.path.join(output_dir, 'visual.conf'), 'wb', encoding='utf-8') as visual_conf:
+        visual_conf.write(create_visual_conf(pocores))
     with codecs.open(os.path.join(output_dir, pocores.document.name+'.ann'), 'wb', encoding='utf-8') as annfile:
         annfile.write(brat_output(pocores))
 
