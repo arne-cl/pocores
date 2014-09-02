@@ -122,6 +122,7 @@ def morph_agreement(pocores, antecedent_node, anaphora_node):
     """
     antecedent = pocores.node_attrs(antecedent_node)
     anaphora = pocores.node_attrs(anaphora_node)
+    ns = pocores.document.ns
 
     def feature_agreement(antecedent_dict, anaphora_dict, feat):
         """
@@ -151,7 +152,7 @@ def morph_agreement(pocores, antecedent_node, anaphora_node):
         return True
 
     #TODO: implement discoursegraphs issue #71 to make this work
-    for feat in ("gender", "person", "number"):
+    for feat in (ns+":gender", ns+":person", ns+":number"):
         if not feature_agreement(antecedent, anaphora, feat):
             return False
     return True
