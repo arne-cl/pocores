@@ -5,7 +5,7 @@ from discoursegraphs.readwrite.conll import traverse_dependencies_up
 
 
 def check_parallelism(pocores, antecedent_id, anaphora_id,
-                      deprel_attrib='pdeprel'):
+                      deprel_attr=None):
     """
     Checks syntactical role parallelism between two given words.
 
@@ -23,21 +23,27 @@ def check_parallelism(pocores, antecedent_id, anaphora_id,
     parallel : bool
     True, if parallelism is found, False otherwise.
     """
+    if deprel_attr is None:
+        deprel_attr = pocores.document.deprel_attr
+
     ant = pocores.node_attrs(antecedent_id)
     ana = pocores.node_attrs(anaphora_id)
-    if (ant[deprel_attrib] == ana[deprel_attrib]
-       and ant[deprel_attrib] in ("SB", "OA", "DA")):
+    if (ant[deprel_attr] == ana[deprel_attr]
+       and ant[deprel_attr] in ("SB", "OA", "DA")):
         return True
     return False
 
 
-def check_role(pocores, antecedent_id, role, deprel_attr='pdeprel'):
+def check_role(pocores, antecedent_id, role, deprel_attr=None):
     """
     Checks if a given word has a certain syntactic role.
 
     antecedent_id : str
         the node ID of the antecedent
     """
+    if deprel_attr is None:
+        deprel_attr = pocores.document.deprel_attr
+
     ant = pocores.node_attrs(antecedent_id)
     if ant[deprel_attr] == role:
         return True
@@ -58,4 +64,5 @@ def get_depth(pocores, token_id):
     Returns number of dependency edges from a given word to root of the
     sentence.
     """
-    return len(list(traverse_dependencies_up(pocores.document, token_id)))
+    return len(list(traverse_dependencies_up(pocores.document, token_id,
+                                             node_attr=pocores.document.lemma_attr)))

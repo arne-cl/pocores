@@ -17,7 +17,7 @@ SENT_REGEX = re.compile('s(\d+)_t\d+')
 
 
 def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
-                            verbose=False, pos_attrib='ppos'):
+                            verbose=False, pos_attr=None):
     """
     applies several filters to the list of potential antecedents.
 
@@ -39,6 +39,9 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
         list of likely antecedents, represented as
         (sentence index, word index) tuples
     """
+    if pos_attr is None:
+        pos_attr = pocores.document.pos_attr
+
     results_dict = pocores.filtered_results[anaphora] = {}
 
     nearby_cands = (can for can in candidates
@@ -48,7 +51,7 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
          "Candidates mentioned no more than %i sentences ago" % sentence_dist)
 
     non_reflexive = (can for can in nearby_cands
-                     if pocores.node_attrs(can)[pos_attrib] != "PRF")
+                     if pocores.node_attrs(can)[pos_attr] != "PRF")
     results_dict["non_reflexive"] = \
         (non_reflexive,
          ("Candidates that don't represent reflexive personal pronouns, "
@@ -155,7 +158,7 @@ def morph_agreement(pocores, antecedent_node, anaphora_node):
 
 
 def is_bound(pocores, antecedent_id, anaphora_id,
-             deprel_attrib='pdeprel', pos_attrib='ppos'):
+             deprel_attr=None, pos_attr=None):
     """
     Checks if two words can be anaphora and antecedent by the binding
     principles of chomsky.
@@ -177,10 +180,15 @@ def is_bound(pocores, antecedent_id, anaphora_id,
     agreement : bool
         True, iff there's morphological agreement between the two tokens
     """
+    if deprel_attr is None:
+        deprel_attr = pocores.document.deprel_attr
+    if pos_attr is None:
+        pos_attr = pocores.document.pos_attr
+
     antecedent = pocores.node_attrs(antecedent_id)
     anaphora = pocores.node_attrs(anaphora_id)
 
-    def anaphora_boundaries(anaphora, deprel_attrib, pos_attrib):
+    def anaphora_boundaries(anaphora, deprel_attr, pos_attr):
         """
         TODO: describe binding categories better
 
@@ -214,7 +222,7 @@ def is_bound(pocores, antecedent_id, anaphora_id,
         # beginning of the sentence
         for word_pos in range(ana_word_pos, 0, -1):
             token_id = tokentuple2id(ana_sent_id, word_pos)
-            if pocores.node_attrs(token_id)[deprel_attrib] in ("PUNC", "CD"):
+            if pocores.node_attrs(token_id)[deprel_attr] in ("PUNC", "CD"):
                 begin = word_pos
                 break
 
@@ -223,23 +231,23 @@ def is_bound(pocores, antecedent_id, anaphora_id,
         # sentence
         for word_pos in range(ana_word_pos, sent_length, 1):
             token_id = tokentuple2id(ana_sent_id, word_pos)
-            if pocores.node_attrs(token_id)[deprel_attrib] in ("PUNC", "CD"):
+            if pocores.node_attrs(token_id)[deprel_attr] in ("PUNC", "CD"):
                 end = word_pos
                 break
         return (begin, end)
 
-    left_limit, right_limit = anaphora_boundaries(anaphora, deprel_attrib,
-                                                  pos_attrib)
+    left_limit, right_limit = anaphora_boundaries(anaphora, deprel_attr,
+                                                  pos_attr)
 
     # binding principle 1
-    if anaphora[pos_attrib] == "PRF":
+    if anaphora[pos_attr] == "PRF":
         if ((anaphora['sent_pos'] != antecedent['sent_pos'])
            or (antecedent['word_pos'] not in range(left_limit, right_limit))):
             return False
 
     # binding principle 2
-    if (anaphora[pos_attrib] == "PPER"
-       and antecedent[pos_attrib] not in ("PRF", "PPOSAT")):
+    if (anaphora[pos_attr] == "PPER"
+       and antecedent[pos_attr] not in ("PRF", "PPOSAT")):
         for candidate_id in pocores.entities[antecedent_id]:
             candidate = pocores.node_attrs(candidate_id)
             if ((anaphora['sent_pos'] == candidate['sent_pos'])
@@ -247,7 +255,7 @@ def is_bound(pocores, antecedent_id, anaphora_id,
                 return False
 
     # binding principle 3
-    if anaphora[pos_attrib] in ("NN", "NE"):
+    if anaphora[pos_attr] in ("NN", "NE"):
         for candidate_id in pocores.entities[antecedent_id]:
             candidate = pocores.node_attrs(candidate_id)
             if anaphora['sent_pos'] == candidate['sent_pos']:
@@ -264,7 +272,7 @@ def tokentuple2id(sent_pos, word_pos):
 
 
 def is_coreferent(pocores, antecedent, anaphora,
-                  lemma_attrib='lemma'):
+                  lemma_attr=None):
     """
     So far: checks if two words have the same lemma. (We're using this for
     basic anaphora resolution.)
@@ -279,7 +287,7 @@ def is_coreferent(pocores, antecedent, anaphora,
         the node ID of the antecedent
     anaphora : str
         the node ID of the anaphora (candidate)
-    lemma_attrib : str
+    lemma_attr : str
         the name of the CoNLL token column that contains the lemma information
         (usually ``phead``, but sometimes ``head`` depending on the version
         of mate-tools used to generate the input
@@ -290,11 +298,14 @@ def is_coreferent(pocores, antecedent, anaphora,
         True, if antecedent and anaphora share the same lemma. False
         otherwise.
     """
-    return pocores.node_attrs(antecedent)[lemma_attrib] == \
-        pocores.node_attrs(anaphora)[lemma_attrib]
+    if lemma_attr is None:
+        lemma_attr = pocores.document.lemma_attr
+
+    return pocores.node_attrs(antecedent)[lemma_attr] == \
+        pocores.node_attrs(anaphora)[lemma_attr]
 
 
-def is_expletive(pocores, token_node, lemma_attrib='lemma'):
+def is_expletive(pocores, token_node, lemma_attr=None):
     """
     Checks if a given token is an expletive.
 
@@ -304,7 +315,7 @@ def is_expletive(pocores, token_node, lemma_attrib='lemma'):
         an instance of the Pocores class
     token_node : str
         the node ID of the token
-    lemma_attrib : str
+    lemma_attr : str
         the name of the CoNLL token column that contains the lemma information
         (usually ``phead``, but sometimes ``head`` depending on the version
         of mate-tools used to generate the input
@@ -313,9 +324,12 @@ def is_expletive(pocores, token_node, lemma_attrib='lemma'):
     -------
     is_expletive : bool
     """
+    if lemma_attr is None:
+        lemma_attr = pocores.document.lemma_attr
+
     if pocores.document.get_token(token_node) in (u'es', u'Es'):
         for lemma in traverse_dependencies_up(pocores.document, token_node,
-                                              node_attribute=lemma_attrib):
+                                              node_attr=lemma_attr):
             if lemma in EXPLETIVE_VERBS:
                 return True
     return False

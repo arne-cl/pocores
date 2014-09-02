@@ -151,11 +151,14 @@ class Pocores(object):
                 for i in self.entities.keys()]
 
     def print_entity_grid(self, min_coref_chain_length=2,
-                          deprel_attrib='pdeprel'):
+                          deprel_attr=None):
         """
         prints all coreference chains, including the grammatical function of
         anaphora and potential antecedents.
         """
+        if deprel_attr is None:
+            deprel_attr = self.document.deprel_attr
+
         for coref_chain in self._get_coref_chains():
             if len(coref_chain) >= min_coref_chain_length:
                 # node ID of the first token in the chain
@@ -168,12 +171,15 @@ class Pocores(object):
                            "'{2}'".format(token, sent_index, deprel))
 
     def _get_entity_grid(self, min_coref_chain_length=2,
-                         deprel_attrib='pdeprel'):
+                         deprel_attr=None):
         """
         returns the entity grid as a dictionary.
 
         TODO: describe the entity grid
         """
+        if deprel_attr is None:
+            deprel_attr = self.document.deprel_attr
+
         coref_chains = [chain for chain in self._get_coref_chains()
                         if len(chain) >= min_coref_chain_length]
         for sent_id in self.document.sentences:
@@ -183,12 +189,12 @@ class Pocores(object):
             for (token, token_id) in coref_chain:
                 token_dict = self.node_attrs(token_id)
                 sent_index = token_dict['sent_pos']
-                deprel = token_dict[deprel_attrib]
+                deprel = token_dict[deprel_attr]
                 self.entity_grid[sent_index][chain_index].append(deprel)
         return self.entity_grid, coref_chains
 
-    def resolve_anaphora(self, weights, max_sent_dist=4, pos_attrib='ppos',
-                         deprel_attrib='pdeprel'):
+    def resolve_anaphora(self, weights, max_sent_dist=4, pos_attr=None,
+                         deprel_attr=None):
         """
         Resolves all nominal and pronominal anaphora in the text (stored in the
         classes sentence dictionary).
@@ -206,6 +212,11 @@ class Pocores(object):
         TODO: make noun_tags, pronoun_tags set constants for effienciency
         TODO: convert weights into a namedtuple
         """
+        if deprel_attr is None:
+            deprel_attr = self.document.deprel_attr
+        if pos_attr is None:
+            pos_attr = self.document.pos_attr
+
         assert isinstance(weights, list), \
             'Weights should be a list, not a "{0}"'.format(type(weights))
         assert all([isinstance(weight, int) for weight in weights]), \
@@ -224,12 +235,12 @@ class Pocores(object):
             for token_id in self.node_attrs(sent_id)['tokens']:
                 tok_attrs = self.node_attrs(token_id)
                 # Treatment of Nominals
-                if (tok_attrs[pos_attrib] in noun_tags
-                   and tok_attrs[deprel_attrib] != "PNC"):
+                if (tok_attrs[pos_attr] in noun_tags
+                   and tok_attrs[deprel_attr] != "PNC"):
                     self._resolve_nominal_anaphora(token_id)
 
                 # Treatment of Pronominals
-                elif (tok_attrs[pos_attrib] in pronoun_tags
+                elif (tok_attrs[pos_attr] in pronoun_tags
                       and not filters.is_expletive(self, token_id)):
                     self._resolve_pronominal_anaphora(token_id, weights,
                                                       max_sent_dist)
@@ -268,7 +279,7 @@ class Pocores(object):
             return anaphora
 
     def _resolve_pronominal_anaphora(self, anaphora, weights, max_sent_dist,
-                                     pos_attrib='ppos'):
+                                     pos_attr=None):
         """
         Tries to resolve a given pronominal anaphora by applying different
         filters and preferences.
@@ -296,6 +307,9 @@ class Pocores(object):
         TODO: provide documentation for scoring and/or convert weights into
               a namedtuple
         """
+        if pos_attr is None:
+            pos_attr = self.document.pos_attr
+
         cand_list = self._get_candidates()
         filtered_candidates = filters.get_filtered_candidates(self, cand_list,
                                                               anaphora,
@@ -308,7 +322,7 @@ class Pocores(object):
 
         # Preferences
         candidate_dict = dict.fromkeys(filtered_candidates, 0)
-        anaphora_pos = self.node_attrs(anaphora)[pos_attrib]
+        anaphora_pos = self.node_attrs(anaphora)[pos_attr]
         if anaphora_pos in set(["PRELS", "PDS"]):
             # chooses the most recent candidate, if the word is a substitutive
             # demonstrative/relative pronoun
