@@ -510,6 +510,12 @@ def run_pocores_with_cli_arguments():
     else:
         write_brat(pocores, args.output_file)
 
+    if args.debug:
+        for chain_generator in pocores._get_coref_chains():
+            chain = list(chain_generator)
+            if chain:
+                print chain
+
 
 def mintok(token_ids):
     """
