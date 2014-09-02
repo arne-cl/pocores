@@ -22,8 +22,9 @@ def parse_options():
     input_options.add_argument('-i', '--input', dest='input',
         help='Specify the input file', metavar='FILENAME')
     input_options.add_argument('-c', '--input_format', dest='informat',
-        default='2010',
-        help='Specify the CoNLL input file format: 2009 or 2010')
+        default='2009',
+        help=('Specify the CoNLL input file format: 2009 or 2010. '
+              'default: 2009'))
 
     coref_options = parser.add_argument_group("Coreference Options",
         "Change coreference resolution parameters without touching the code.")
