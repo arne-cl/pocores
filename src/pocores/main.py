@@ -485,7 +485,17 @@ def run_pocores_with_cli_arguments():
     assert args.informat in ('2009', '2010')
     assert args.outformat in ('bracketed', 'brat')
 
-    docgraph = ConllDocumentGraph(args.input, conll_format=args.informat)
+    if args.informat == '2009':
+        docgraph = ConllDocumentGraph(args.input, conll_format=args.informat,
+                                      deprel_attr='pdeprel', feat_attr='pfeat',
+                                      head_attr='phead', lemma_attr='plemma',
+                                      pos_attr='ppos')
+    else:  # conll 2010 format
+        docgraph = ConllDocumentGraph(args.input, conll_format=args.informat,
+                                      deprel_attr='pdeprel', feat_attr='pfeat',
+                                      head_attr='phead', lemma_attr='lemma',
+                                      pos_attr='ppos')
+
     pocores = Pocores(docgraph)
 
     weights = WEIGHTS
