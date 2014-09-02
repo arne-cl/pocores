@@ -160,15 +160,16 @@ class Pocores(object):
             deprel_attr = self.document.deprel_attr
 
         for coref_chain in self._get_coref_chains():
+            coref_chain = list(coref_chain)
             if len(coref_chain) >= min_coref_chain_length:
                 # node ID of the first token in the chain
                 print "\n\nEntity '{0}':".format(coref_chain[0][1])
                 for (token, node_id) in coref_chain:
                     token_dict = self.node_attrs(node_id)
                     sent_index = token_dict['sent_pos']
-                    deprel = token_dict[deprel_attrib]
-                    print ("\t{0} in sentence {1} with function "
-                           "'{2}'".format(token, sent_index, deprel))
+                    deprel = token_dict[deprel_attr]
+                    print (u"\t{0} in sentence {1} with function "
+                           u"'{2}'".format(token, sent_index, deprel))
 
     def _get_entity_grid(self, min_coref_chain_length=2,
                          deprel_attr=None):
