@@ -531,9 +531,21 @@ def run_pocores_with_cli_arguments():
     pocores.resolve_anaphora(weights, max_sent_dist)
 
     if args.outformat == 'bracketed':
-        args.output_file.write(output_with_brackets(pocores))
-    else:
-        write_brat(pocores, args.output_file)
+        if isinstance(args.output_dest, file):
+            args.output_dest.write(output_with_brackets(pocores))
+        else:
+            path_to_dir, _filename = os.path.split(args.output_dest)
+            create_dir(path_to_dir)
+            with codecs.open(args.output_dest, 'w', 'utf-8') as output_dest:
+                output_dest.write(output_with_brackets(pocores))
+
+    else:  # 'brat'
+        if not isinstance(args.output_dest, file):
+            # args.output_dest will be treated as a directory
+            write_brat(pocores, args.output_dest)
+        else:
+            sys.stderr.write('For brat output specify an output folder.\n')
+            sys.exit(1)
 
     if args.debug:
         for chain_generator in pocores._get_coref_chains():

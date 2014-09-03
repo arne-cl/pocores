@@ -37,7 +37,7 @@ def parse_options():
 
     output_options = parser.add_argument_group("Output Options",
         "These options allow you to specify various output options")
-    output_options.add_argument('-o', '--output', dest='output_file',
+    output_options.add_argument('-o', '--output', dest='output_dest',
         nargs='?', default=sys.stdout,
         help=('Specify the output file (output folder in case of brat) to write to.'),
         metavar='FILENAME')
