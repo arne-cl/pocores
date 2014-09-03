@@ -389,7 +389,7 @@ def output_with_brackets(pocores):
     um [Don Giovanni]_{1} zu verhaften , erzählt [ihnen]_{154}
     [Leporello , was geschehen ist]_{4} .
     """
-    return_str = ""
+    return_str = u""
 
     for sent_id in pocores.document.sentences:
         # collect brackets
@@ -410,12 +410,11 @@ def output_with_brackets(pocores):
                     closing[last_token] = [first_mention]
                 else:
                     closing[last_token].insert(0, first_mention)
-        # print
+
         sent_str = ""
         for token_id in token_ids:  # iterate over tokens in sentence
             if token_id in opening:
                 for mention_id in opening[token_id]:
-                    print ''
                     sent_str += "["
             sent_str += pocores.node_attrs(token_id)['token']
             if token_id in closing:
