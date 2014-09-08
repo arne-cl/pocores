@@ -324,35 +324,36 @@ class Pocores(object):
             return anaphora
 
         # Preferences
-        candidate_dict = dict.fromkeys(filtered_candidates, 0)
+        can_dict = dict.fromkeys(filtered_candidates, 0)
         anaphora_pos = self.node_attrs(anaphora)[pos_attr]
         if anaphora_pos in set(["PRELS", "PDS"]):
             # chooses the most recent candidate, if the word is a substitutive
             # demonstrative/relative pronoun
-            antecedent = max(candidate_dict)
+            antecedent = max(can_dict)
 
         elif anaphora_pos in set(["PPER", "PRF", "PPOSAT"]):
             # scores the candidates, if the word is a personal pronoun or an
             # attributive possessive pronoun
-            for can in candidate_dict:
+            for can in can_dict:
                 if prefs.check_parallelism(self, can, anaphora):
-                    candidate_dict[can] += weights[0]
+                    can_dict[can] += weights[0]
                 if prefs.check_role(self, can, "SB"):
-                    candidate_dict[can] += weights[1]
+                    can_dict[can] += weights[1]
                 if prefs.check_role(self, can, "OA"):
-                    candidate_dict[can] += weights[2]
+                    can_dict[can] += weights[2]
                 if prefs.check_role(self, can, "DA"):
-                    candidate_dict[can] += weights[3]
-                candidate_dict[can] += weights[4] * math.log(prefs.get_chain_length(self, can))
-                candidate_dict[can] -= weights[5] * filters.distance(can, anaphora)
-                candidate_dict[can] -= weights[6] * prefs.get_depth(self, can)
+                    can_dict[can] += weights[3]
+                can_dict[can] += \
+                    weights[4] * math.log(prefs.get_chain_length(self, can))
+                can_dict[can] -= weights[5] * filters.distance(can, anaphora)
+                can_dict[can] -= weights[6] * prefs.get_depth(self, can)
                 # NOTE: additional preferences can be added here
 
             # Pick candidate with highest Score. If there are candidates with
             # the same score, pick closest
             # TODO: debug this after _get_candidates() works
             antecedent = sorted([(v, k)
-                                for k, v in candidate_dict.iteritems()],
+                                for k, v in can_dict.iteritems()],
                                 reverse=True)[0][1]
 
         # TODO: add other pronoun resolution algorithm
@@ -439,10 +440,11 @@ def brat_output(pocores):
     for i, token_id in enumerate(pocores.document.tokens):
         tok_len = len(pocores._get_word(token_id))
         if token_id in pocores.mentions:
-            entity_str = unidecode(pocores._get_word(pocores.mentions[token_id]))
-            ret_str += u"T{}\t{} {} {}\t{}\n".format(candidates_to_cid[token_id],
-                                                               entity_str, onset, onset+tok_len,
-                                                               pocores._get_word(token_id))
+            entity_str = \
+                unidecode(pocores._get_word(pocores.mentions[token_id]))
+            ret_str += u"T{}\t{} {} {}\t{}\n".format(
+                candidates_to_cid[token_id], entity_str, onset, onset+tok_len,
+                pocores._get_word(token_id))
         onset += tok_len+1
     return ret_str
 
@@ -469,28 +471,50 @@ def create_visual_conf(pocores):
     num_of_entities = len(pocores.entities)
     mapsize = min(num_of_entities, 12)
     colormap = brewer2mpl.get_map('Paired', 'Qualitative', mapsize)
-    color_ids = range(mapsize) * int(math.ceil(num_of_entities / float(mapsize)))
+    colors = range(mapsize) * int(math.ceil(num_of_entities / float(mapsize)))
 
-    for i, entity_id in enumerate(sorted(pocores.entities, key=natural_sort_key)):
+    for i, entity_id in enumerate(sorted(pocores.entities,
+                                         key=natural_sort_key)):
         # TODO: check why there are empty entities at all
         if pocores.entities[entity_id]:
-            background_color = colormap.hex_colors[color_ids[i]]
+            background_color = colormap.hex_colors[colors[i]]
             ascii_entity = unidecode(pocores._get_word(entity_id))
-            ret_str += u'{}\tbgColor:{}\n'.format(ascii_entity, background_color)
+            ret_str += u'{}\tbgColor:{}\n'.format(ascii_entity,
+                                                  background_color)
     ret_str += '\n[labels]'
     return ret_str
 
 
 def write_brat(pocores, output_dir):
     create_dir(output_dir)
-    with codecs.open(os.path.join(output_dir, pocores.document.name+'.txt'), 'wb', encoding='utf-8') as txtfile:
+    with codecs.open(os.path.join(output_dir, pocores.document.name+'.txt'),
+                     'wb', encoding='utf-8') as txtfile:
         txtfile.write(get_text(pocores.document))
-    with codecs.open(os.path.join(output_dir, 'annotation.conf'), 'wb', encoding='utf-8') as annotation_conf:
+    with codecs.open(os.path.join(output_dir, 'annotation.conf'),
+                     'wb', encoding='utf-8') as annotation_conf:
         annotation_conf.write(create_annotation_conf(pocores))
-    with codecs.open(os.path.join(output_dir, 'visual.conf'), 'wb', encoding='utf-8') as visual_conf:
+    with codecs.open(os.path.join(output_dir, 'visual.conf'),
+                     'wb', encoding='utf-8') as visual_conf:
         visual_conf.write(create_visual_conf(pocores))
-    with codecs.open(os.path.join(output_dir, pocores.document.name+'.ann'), 'wb', encoding='utf-8') as annfile:
+    with codecs.open(os.path.join(output_dir, pocores.document.name+'.ann'),
+                     'wb', encoding='utf-8') as annfile:
         annfile.write(brat_output(pocores))
+
+
+def mintok(token_ids):
+    """
+    given a list of token node IDs, returns the token node ID of the token that
+    occurs first in the text.
+    """
+    return min(token_ids, key=natural_sort_key)
+
+
+def maxtok(token_ids):
+    """
+    given a list of token node IDs, returns the token node ID of the token that
+    occurs last in the text.
+    """
+    return max(token_ids, key=natural_sort_key)
 
 
 def run_pocores_with_cli_arguments():
@@ -551,11 +575,9 @@ def run_pocores_with_cli_arguments():
     if args.debug:
         non_trivial_chains = []
         singletons = []
-        #~ print "\nEntities and their mentions:\n"
         for chain_generator in pocores._get_coref_chains():
             chain = list(chain_generator)
             if chain:
-                #~ print chain
                 if len(chain) > 1:
                     non_trivial_chains.append(chain)
                 else:
@@ -568,22 +590,6 @@ def run_pocores_with_cli_arguments():
         print "\nCoreference chains:\n"
         for chain in non_trivial_chains:
             print chain
-
-
-def mintok(token_ids):
-    """
-    given a list of token node IDs, returns the token node ID of the token that
-    occurs first in the text.
-    """
-    return min(token_ids, key=natural_sort_key)
-
-
-def maxtok(token_ids):
-    """
-    given a list of token node IDs, returns the token node ID of the token that
-    occurs last in the text.
-    """
-    return max(token_ids, key=natural_sort_key)
 
 
 if __name__ == '__main__':
