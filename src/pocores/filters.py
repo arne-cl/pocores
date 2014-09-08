@@ -71,15 +71,15 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
 
     if verbose:
         sent_id = pocores.node_attrs(anaphora)['sent_pos']
-        print ("\n\n*** potential candidates for the anaphora "
-               "'{0}' ({1}) in the sentence '{2}'"
-               "***\n".format(pocores._get_word(anaphora),
-                              anaphora, pocores._get_sentence(sent_id)))
+        print (u"\n\n*** potential candidates for the anaphora "
+               u"'{0}' ({1}) in the sentence '{2}'"
+               u"***\n".format(pocores._get_word(anaphora),
+                               anaphora, pocores._get_sentence(sent_id)))
         for filter_name in results_dict.keys():
             candidate_list, filter_description = results_dict[filter_name]
-            print "{0}:\n\t{1}\n".format(filter_description,
-                                         pocores._get_wordlist(candidate_list,
-                                                               verbose=True))
+            print u"{0}:\n\t{1}\n".format(filter_description,
+                                          list(pocores._get_wordlist(candidate_list,
+                                                                verbose=True)))
     # we need to return a list instead of a generator, because generators are
     # considered ``True`` even if they're 'empty'!
     return list(bound_cands)

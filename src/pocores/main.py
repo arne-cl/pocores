@@ -195,7 +195,7 @@ class Pocores(object):
         return self.entity_grid, coref_chains
 
     def resolve_anaphora(self, weights, max_sent_dist=4, pos_attr=None,
-                         deprel_attr=None):
+                         deprel_attr=None, debug=False):
         """
         Resolves all nominal and pronominal anaphora in the text (stored in the
         classes sentence dictionary).
@@ -244,7 +244,8 @@ class Pocores(object):
                 elif (tok_attrs[pos_attr] in pronoun_tags
                       and not filters.is_expletive(self, token_id)):
                     self._resolve_pronominal_anaphora(token_id, weights,
-                                                      max_sent_dist)
+                                                      max_sent_dist,
+                                                      debug=debug)
 
     def _resolve_nominal_anaphora(self, anaphora):
         """
@@ -274,13 +275,14 @@ class Pocores(object):
                 self.mentions[anaphora] = first_mention
                 return first_mention
 
+        # 'anaphora' represents an entity that wasn't mentioned before
         if anaphora not in self.mentions:
             self.entities[anaphora] = [anaphora]
             self.mentions[anaphora] = anaphora
             return anaphora
 
     def _resolve_pronominal_anaphora(self, anaphora, weights, max_sent_dist,
-                                     pos_attr=None):
+                                     pos_attr=None, debug=False):
         """
         Tries to resolve a given pronominal anaphora by applying different
         filters and preferences.
@@ -314,7 +316,8 @@ class Pocores(object):
         cand_list = self._get_candidates()
         filtered_candidates = filters.get_filtered_candidates(self, cand_list,
                                                               anaphora,
-                                                              max_sent_dist)
+                                                              max_sent_dist,
+                                                              verbose=debug)
 
         if not filtered_candidates:
             self.entities[anaphora] = [anaphora]
@@ -527,7 +530,7 @@ def run_pocores_with_cli_arguments():
         except ValueError as e:
             print "max_sent_dist must be an integer. {0}".format(e)
 
-    pocores.resolve_anaphora(weights, max_sent_dist)
+    pocores.resolve_anaphora(weights, max_sent_dist, debug=args.debug)
 
     if args.outformat == 'bracketed':
         if isinstance(args.output_dest, file):
@@ -547,6 +550,7 @@ def run_pocores_with_cli_arguments():
             sys.exit(1)
 
     if args.debug:
+        print "\nEntities and their mentions:\n"
         for chain_generator in pocores._get_coref_chains():
             chain = list(chain_generator)
             if chain:
