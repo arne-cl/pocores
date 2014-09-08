@@ -306,7 +306,6 @@ class Pocores(object):
         looked at, i.e. the sentences that contain potential antecedents
         @type max_sent_dist: C{int}
 
-        TODO: implement filters.get_filtered_candidates() to make this work
         TODO: provide documentation for scoring and/or convert weights into
               a namedtuple
         """
