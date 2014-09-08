@@ -7,6 +7,7 @@ candidates.
 """
 
 import re
+from collections import OrderedDict
 
 from discoursegraphs.readwrite.conll import traverse_dependencies_up
 
@@ -42,7 +43,7 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
     if pos_attr is None:
         pos_attr = pocores.document.pos_attr
 
-    results_dict = pocores.filtered_results[anaphora] = {}
+    results_dict = pocores.filtered_results[anaphora] = OrderedDict()
 
     nearby_cands = [can for can in candidates
                     if distance(can, anaphora) <= sentence_dist]
@@ -54,20 +55,20 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
                      if pocores.node_attrs(can)[pos_attr] != "PRF"]
     results_dict["non_reflexive"] = \
         (non_reflexive,
-         ("Candidates that don't represent reflexive personal pronouns, "
+         (", which also don't represent reflexive personal pronouns, "
           "e.g. sich, einander, dich, mir"))
 
     agreeing_cands = [can for can in non_reflexive
                       if morph_agreement(pocores, can, anaphora)]
     results_dict["agreement"] = \
         (agreeing_cands,
-         "Candidates in morphological agreement with the anaphora")
+         ", which are in morphological agreement with the anaphora")
 
     bound_cands = [can for can in agreeing_cands
                    if is_bound(pocores, can, anaphora)]
     results_dict["binding"] = \
         (bound_cands,
-         "Candidates that can be bound by the anaphora")
+         "and which can be bound by the anaphora")
 
     if verbose:
         #~ import pudb; pudb.set_trace() # TODO: remove after debugging
