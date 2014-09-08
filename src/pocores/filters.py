@@ -44,32 +44,33 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
 
     results_dict = pocores.filtered_results[anaphora] = {}
 
-    nearby_cands = (can for can in candidates
-                    if distance(can, anaphora) <= sentence_dist)
+    nearby_cands = [can for can in candidates
+                    if distance(can, anaphora) <= sentence_dist]
     results_dict["distance"] = \
         (nearby_cands,
          "Candidates mentioned no more than %i sentences ago" % sentence_dist)
 
-    non_reflexive = (can for can in nearby_cands
-                     if pocores.node_attrs(can)[pos_attr] != "PRF")
+    non_reflexive = [can for can in nearby_cands
+                     if pocores.node_attrs(can)[pos_attr] != "PRF"]
     results_dict["non_reflexive"] = \
         (non_reflexive,
          ("Candidates that don't represent reflexive personal pronouns, "
           "e.g. sich, einander, dich, mir"))
 
-    agreeing_cands = (can for can in non_reflexive
-                      if morph_agreement(pocores, can, anaphora))
+    agreeing_cands = [can for can in non_reflexive
+                      if morph_agreement(pocores, can, anaphora)]
     results_dict["agreement"] = \
         (agreeing_cands,
          "Candidates in morphological agreement with the anaphora")
 
-    bound_cands = (can for can in agreeing_cands
-                   if is_bound(pocores, can, anaphora))
+    bound_cands = [can for can in agreeing_cands
+                   if is_bound(pocores, can, anaphora)]
     results_dict["binding"] = \
         (bound_cands,
          "Candidates that can be bound by the anaphora")
 
     if verbose:
+        #~ import pudb; pudb.set_trace() # TODO: remove after debugging
         sent_id = pocores.node_attrs(anaphora)['sent_pos']
         print (u"\n\n*** potential candidates for the anaphora "
                u"'{0}' ({1}) in the sentence '{2}'"
@@ -80,9 +81,7 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
             print u"{0}:\n\t{1}\n".format(filter_description,
                                           list(pocores._get_wordlist(candidate_list,
                                                                 verbose=True)))
-    # we need to return a list instead of a generator, because generators are
-    # considered ``True`` even if they're 'empty'!
-    return list(bound_cands)
+    return bound_cands
 
 
 def distance(token_node_id1, token_node_id2):
