@@ -549,11 +549,25 @@ def run_pocores_with_cli_arguments():
             sys.exit(1)
 
     if args.debug:
-        print "\nEntities and their mentions:\n"
+        non_trivial_chains = []
+        singletons = []
+        #~ print "\nEntities and their mentions:\n"
         for chain_generator in pocores._get_coref_chains():
             chain = list(chain_generator)
             if chain:
-                print chain
+                #~ print chain
+                if len(chain) > 1:
+                    non_trivial_chains.append(chain)
+                else:
+                    singletons.append(chain)
+
+        print "\nSingletons:\n"
+        for singleton in singletons:
+            print singleton
+
+        print "\nCoreference chains:\n"
+        for chain in non_trivial_chains:
+            print chain
 
 
 def mintok(token_ids):
