@@ -144,10 +144,8 @@ class Pocores(object):
             a list of coreference chain lists. each coreference chain is
             represented by an ordered list of (token string, token node ID)
             tuples
-
-        TODO: implement self.entities; issue #2
         """
-        return [self._get_wordlist(self.entities[i], verbose=True)
+        return [reversed(list(self._get_wordlist(self.entities[i], verbose=True)))
                 for i in self.entities.keys()]
 
     def print_entity_grid(self, min_coref_chain_length=2,
