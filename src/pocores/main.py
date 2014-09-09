@@ -194,7 +194,7 @@ class Pocores(object):
                 self.entity_grid[sent_index][chain_index].append(deprel)
         return self.entity_grid, coref_chains
 
-    def resolve_anaphora(self, weights, max_sent_dist=4, pos_attr=None,
+    def resolve_anaphora(self, weights=WEIGHTS, max_sent_dist=4, pos_attr=None,
                          deprel_attr=None, debug=False):
         """
         Resolves all nominal and pronominal anaphora in the text (stored in the

@@ -3,4 +3,4 @@
 
 # flake8: noqa
 
-from pocores.main import Pocores
+from pocores.main import Pocores, WEIGHTS
