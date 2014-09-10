@@ -365,6 +365,34 @@ class Pocores(object):
         self.mentions[anaphora] = first_mention
         return first_mention
 
+    def add_coreference_chains_to_docgraph(self):
+        for chain_generator in self._get_coref_chains():
+            chain = list(chain_generator)
+            chain_len = len(chain)
+            if chain and chain_len > 1:
+                for i, (token, token_node_id) in enumerate(chain):
+                    if i < chain_len-1:  # if it's not the last/only element
+                        print token, token_node_id, "referring"
+                        _ant_tok, ant_node_id = chain[i+1]
+
+                        markable_attrs = {'pocores:type': 'anaphoric',
+                                          'pocores:anaphor_antecedent': ant_node_id,
+                                          'pocores:referentiality': 'referring'}
+
+                        edge_attrs = {'edge_type': EdgeTypes.pointing_relation,
+                                      'label': 'pocores:antecedent'}
+                        layers = {'pocores', 'pocores:markable'}
+                        self.document.add_edge(token_node_id, ant_node_id, layers, attr_dict=edge_attrs)
+
+                    else:
+                        print token, token_node_id, "discourse-new\n"
+                        markable_attrs = {'pocores:type': 'none',
+                                          'pocores:anaphor_antecedent': 'empty',
+                                          'pocores:referentiality': 'discourse-new'}
+
+                    self.document.node[token_node_id]['layers'].update({'pocores:markable'})
+                    self.document.node[token_node_id].update(markable_attrs)
+
 
 def traverse_dependencies_down(docgraph, node_id):
     """
@@ -572,6 +600,7 @@ def run_pocores_with_cli_arguments():
             print "max_sent_dist must be an integer. {0}".format(e)
 
     pocores.resolve_anaphora(weights, max_sent_dist, debug=args.debug)
+    pocores.add_coreference_chains_to_docgraph()
 
     if args.outformat == 'bracketed':
         if isinstance(args.output_dest, file):
