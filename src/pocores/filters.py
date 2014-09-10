@@ -43,6 +43,7 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
     if pos_attr is None:
         pos_attr = pocores.document.pos_attr
 
+    report = pocores.candidate_report[anaphora]
     results_dict = pocores.filtered_results[anaphora] = OrderedDict()
 
     nearby_cands = [can for can in candidates
@@ -69,6 +70,7 @@ def get_filtered_candidates(pocores, candidates, anaphora, sentence_dist,
     results_dict["binding"] = \
         (bound_cands,
          "and which can be bound by the anaphora")
+    report['filter_results'] = results_dict
 
     if verbose:
         #~ import pudb; pudb.set_trace() # TODO: remove after debugging

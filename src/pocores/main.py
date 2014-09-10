@@ -69,6 +69,10 @@ class Pocores(object):
         # TODO: write entity grid description
         self.entity_grid = {}
 
+        # stores lots of debug information for each coreference mention
+        # candidate
+        self.candidate_report = defaultdict(lambda : defaultdict(str))
+
     def node_attrs(self, token_node_id):
         """
         returns the attribute dictionary of a token, given its node ID.
@@ -226,6 +230,7 @@ class Pocores(object):
         # TODO: explain/show, why these structures have to be reset
         self.entities.clear()
         self.ana_to_ante.clear()
+        self.candidate_report.clear()
 
         noun_tags = ("NN", "NE")
         pronoun_tags = ("PPER", "PRELS", "PRF", "PPOSAT", "PDS")
@@ -262,6 +267,8 @@ class Pocores(object):
             was found. Otherwise the input (i.e. the token node ID of the
             anaphora) is returned.
         """
+        self.candidate_report[anaphora]['anaphora_type'] = 'nominal'
+
         candidates_list = self._get_candidates()
         # iterate over antecedent candidates, starting from the closest
         # preceding one to the left-most one
@@ -310,11 +317,17 @@ class Pocores(object):
         if pos_attr is None:
             pos_attr = self.document.pos_attr
 
+        report = self.candidate_report[anaphora]
+        report['anaphora_type'] = 'pronominal'
+
         cand_list = self._get_candidates()
         filtered_candidates = filters.get_filtered_candidates(self, cand_list,
                                                               anaphora,
                                                               max_sent_dist,
                                                               verbose=debug)
+
+        report['candidates'] = cand_list
+        report['filtered_candidates'] = filtered_candidates
 
         if not filtered_candidates:
             self.entities[anaphora] = [anaphora]
