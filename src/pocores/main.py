@@ -585,6 +585,11 @@ def run_pocores_with_cli_arguments():
         for singleton in singletons:
             print singleton
 
+    if args.eval_file:
+        from discoursegraphs.readwrite import MMAXDocumentGraph
+        import pudb; pudb.set_trace() # TODO: rm debug
+        eval_docgraph = MMAXDocumentGraph(args.eval_file)
+        eval_docgraph.merge_graphs(pocores.document)
         print "\nCoreference chains:\n"
         for chain in non_trivial_chains:
             print chain

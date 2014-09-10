@@ -46,9 +46,13 @@ def parse_options():
         help=('Specify format the output shall be printed in. Format can be one'
         ' of the following: bracketed, brat'),
         metavar='OUTFORMAT')
-    coref_options.add_argument('--debug', action='store_true',
-        help=('print additional debugging information'))
 
+    eval_options = parser.add_argument_group("Evaluation/Debug Options")
+    eval_options.add_argument('--debug', action='store_true',
+        help=('print additional debugging information'))
+    eval_options.add_argument('-e', '--eval', dest='eval_file',
+        help=(('evaluate Pocores coreference resolution against *.mmax gold '
+               'standard file')))
 
     return parser, parser.parse_args(sys.argv[1:])
 
