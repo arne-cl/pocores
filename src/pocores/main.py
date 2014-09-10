@@ -372,7 +372,6 @@ class Pocores(object):
             if chain and chain_len > 1:
                 for i, (token, token_node_id) in enumerate(chain):
                     if i < chain_len-1:  # if it's not the last/only element
-                        print token, token_node_id, "referring"
                         _ant_tok, ant_node_id = chain[i+1]
 
                         markable_attrs = {'pocores:type': 'anaphoric',
@@ -385,7 +384,6 @@ class Pocores(object):
                         self.document.add_edge(token_node_id, ant_node_id, layers, attr_dict=edge_attrs)
 
                     else:
-                        print token, token_node_id, "discourse-new\n"
                         markable_attrs = {'pocores:type': 'none',
                                           'pocores:anaphor_antecedent': 'empty',
                                           'pocores:referentiality': 'discourse-new'}
