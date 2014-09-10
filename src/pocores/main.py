@@ -515,6 +515,26 @@ def maxtok(token_ids):
     return max(token_ids, key=natural_sort_key)
 
 
+def print_coreference_report(pocores):
+    non_trivial_chains = []
+    singletons = []
+    for chain_generator in pocores._get_coref_chains():
+        chain = list(chain_generator)
+        if chain:
+            if len(chain) > 1:
+                non_trivial_chains.append(chain)
+            else:
+                singletons.append(chain)
+
+    print "\nSingletons:\n"
+    for singleton in singletons:
+        print singleton
+
+    print "\nCoreference chains:\n"
+    for chain in non_trivial_chains:
+        print chain
+
+
 def run_pocores_with_cli_arguments():
     parser, args = cli.parse_options()
     if args.input is None:
@@ -571,28 +591,13 @@ def run_pocores_with_cli_arguments():
             sys.exit(1)
 
     if args.debug:
-        non_trivial_chains = []
-        singletons = []
-        for chain_generator in pocores._get_coref_chains():
-            chain = list(chain_generator)
-            if chain:
-                if len(chain) > 1:
-                    non_trivial_chains.append(chain)
-                else:
-                    singletons.append(chain)
-
-        print "\nSingletons:\n"
-        for singleton in singletons:
-            print singleton
+        print_coreference_report(pocores)
 
     if args.eval_file:
         from discoursegraphs.readwrite import MMAXDocumentGraph
         import pudb; pudb.set_trace() # TODO: rm debug
         eval_docgraph = MMAXDocumentGraph(args.eval_file)
         eval_docgraph.merge_graphs(pocores.document)
-        print "\nCoreference chains:\n"
-        for chain in non_trivial_chains:
-            print chain
 
 
 if __name__ == '__main__':
