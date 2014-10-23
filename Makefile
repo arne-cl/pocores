@@ -5,6 +5,7 @@ install:
 
 uninstall:
 	yes | pip uninstall pocores
+	yes | pip uninstall discoursegraphs
 
 clean:
 	find . -name *.pyc -delete
