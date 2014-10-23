@@ -7,7 +7,7 @@ This module implements the command line interface of pocores.
 """
 
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, FileType
 
 
 def parse_options():
@@ -19,7 +19,8 @@ def parse_options():
 
     input_options = parser.add_argument_group("Input Options",
         "These options allow you to specify input options")
-    input_options.add_argument('-i', '--input', dest='input',
+    input_options.add_argument('-i', '--input', default=sys.stdin,
+        type=FileType('r'), dest='input',
         help='Specify the input file', metavar='FILENAME')
     input_options.add_argument('-c', '--input_format', dest='informat',
         default='2009',
