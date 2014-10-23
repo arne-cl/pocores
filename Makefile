@@ -8,7 +8,7 @@ uninstall:
 	yes | pip uninstall discoursegraphs
 
 clean:
-	find . -name *.pyc -delete
+	find . -name '*.pyc' -delete
 	rm -rf build dist src/pocores.egg-info
 
 reinstall: clean uninstall install
