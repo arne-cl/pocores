@@ -524,7 +524,8 @@ def create_visual_conf(pocores):
 
 def write_brat(pocores, output_dir):
     create_dir(output_dir)
-    with codecs.open(os.path.join(output_dir, pocores.document.name+'.txt'),
+    doc_name = os.path.basename(pocores.document.name)
+    with codecs.open(os.path.join(output_dir, doc_name+'.txt'),
                      'wb', encoding='utf-8') as txtfile:
         txtfile.write(get_text(pocores.document))
     with codecs.open(os.path.join(output_dir, 'annotation.conf'),
@@ -533,7 +534,7 @@ def write_brat(pocores, output_dir):
     with codecs.open(os.path.join(output_dir, 'visual.conf'),
                      'wb', encoding='utf-8') as visual_conf:
         visual_conf.write(create_visual_conf(pocores))
-    with codecs.open(os.path.join(output_dir, pocores.document.name+'.ann'),
+    with codecs.open(os.path.join(output_dir, doc_name+'.ann'),
                      'wb', encoding='utf-8') as annfile:
         annfile.write(brat_output(pocores))
 
