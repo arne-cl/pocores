@@ -575,8 +575,17 @@ def print_coreference_report(pocores):
         print chain
 
 
-def run_pocores_with_cli_arguments():
-    parser, args = cli.parse_options()
+def run_pocores_with_cli_options(argv):
+    """
+    Run the pocores coreference system with the given command line arguments.
+    This will generate output files in brat or bracket format.
+
+    Parameters
+    ----------
+    argv : list of str
+        a list of command line arguments (usually from sys.argv[1:])
+    """
+    parser, args = cli.parse_options(argv)
     if args.input is None:
         parser.print_help()
         sys.exit(0)
@@ -646,4 +655,4 @@ if __name__ == '__main__':
     parses command line arguments, runs coreference analysis and produdes
     output (stdout or file(s)).
     """
-    run_pocores_with_cli_arguments()
+    run_pocores_with_cli_options(sys.argv[1:])
