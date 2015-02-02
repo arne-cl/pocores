@@ -126,6 +126,18 @@ def morph_agreement(pocores, antecedent_node, anaphora_node):
     anaphora = pocores.node_attrs(anaphora_node)
     ns = pocores.document.ns
 
+    def hotfix_feats(feat_dict):
+      feats = feat_dict['pfeat'].strip().split('|')
+      for entry in feats:
+	  if entry in ['fem', 'masc', 'neut']:
+	      feat_dict[ns+":gender"] = entry
+	  if entry in ['pl', 'sg']:
+	      feat_dict[ns+":number"] = entry
+	  if entry in ['3', '2', '1']:
+	      feat_dict[ns+":person"] = entry
+    hotfix_feats(antecedent)
+    hotfix_feats(anaphora)
+
     def feature_agreement(antecedent_dict, anaphora_dict, feat):
         """
         Checks if anaphora and antecedent share the same feature. The
