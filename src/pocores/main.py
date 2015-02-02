@@ -21,9 +21,9 @@ from collections import defaultdict, OrderedDict
 
 import brewer2mpl
 from unidecode import unidecode
-from discoursegraphs import EdgeTypes, get_text, tokens2text
+
+import discoursegraphs as dg
 from discoursegraphs.util import natural_sort_key, create_dir
-from discoursegraphs.readwrite import ConllDocumentGraph
 
 from pocores import cli, filters
 from pocores import preferences as prefs
@@ -136,7 +136,7 @@ class Pocores(object):
         """
         assert isinstance(sent_id, (int, str))
         sid = sent_id if isinstance(sent_id, str) else 's{}'.format(sent_id)
-        return tokens2text(self.document, self.node_attrs(sid)['tokens'])
+        return dg.tokens2text(self.document, self.node_attrs(sid)['tokens'])
 
     def _get_coref_chains(self):
         """
@@ -391,7 +391,7 @@ class Pocores(object):
                                           'pocores:anaphor_antecedent': ant_node_id,
                                           'pocores:referentiality': 'referring'}
 
-                        edge_attrs = {'edge_type': EdgeTypes.pointing_relation,
+                        edge_attrs = {'edge_type': dg.EdgeTypes.pointing_relation,
                                       'label': 'pocores:antecedent'}
                         layers = {'pocores', 'pocores:markable'}
                         self.document.add_edge(token_node_id, ant_node_id, layers, attr_dict=edge_attrs)
@@ -413,7 +413,7 @@ def traverse_dependencies_down(docgraph, node_id):
     yield node_id
     out_edges = docgraph.edge[node_id]
     for target in out_edges:
-        if any(edge_attr['edge_type'] == EdgeTypes.dominance_relation
+        if any(edge_attr['edge_type'] == dg.EdgeTypes.dominance_relation
                for edge_id, edge_attr in out_edges[target].iteritems()):
             for target_id in traverse_dependencies_down(docgraph, target):
                 yield target_id
@@ -527,7 +527,7 @@ def write_brat(pocores, output_dir):
     doc_name = os.path.basename(pocores.document.name)
     with codecs.open(os.path.join(output_dir, doc_name+'.txt'),
                      'wb', encoding='utf-8') as txtfile:
-        txtfile.write(get_text(pocores.document))
+        txtfile.write(dg.get_text(pocores.document))
     with codecs.open(os.path.join(output_dir, 'annotation.conf'),
                      'wb', encoding='utf-8') as annotation_conf:
         annotation_conf.write(create_annotation_conf(pocores))
