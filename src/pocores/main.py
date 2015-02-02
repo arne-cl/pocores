@@ -21,9 +21,9 @@ from collections import defaultdict, OrderedDict
 
 import brewer2mpl
 from unidecode import unidecode
-from discoursegraphs import EdgeTypes, get_text, tokens2text
+
+import discoursegraphs as dg
 from discoursegraphs.util import natural_sort_key, create_dir
-from discoursegraphs.readwrite import ConllDocumentGraph
 
 from pocores import cli, filters
 from pocores import preferences as prefs
@@ -136,7 +136,7 @@ class Pocores(object):
         """
         assert isinstance(sent_id, (int, str))
         sid = sent_id if isinstance(sent_id, str) else 's{}'.format(sent_id)
-        return tokens2text(self.document, self.node_attrs(sid)['tokens'])
+        return dg.tokens2text(self.document, self.node_attrs(sid)['tokens'])
 
     def _get_coref_chains(self):
         """
@@ -241,7 +241,8 @@ class Pocores(object):
                 # Treatment of Nominals
                 if (tok_attrs[pos_attr] in noun_tags
                    and tok_attrs[deprel_attr] != "PNC"):
-                    self._resolve_nominal_anaphora(token_id)
+                    self._resolve_nominal_anaphora(token_id, max_sent_dist,
+                                                   debug=debug)
 
                 # Treatment of Pronominals
                 elif (tok_attrs[pos_attr] in pronoun_tags
@@ -250,7 +251,7 @@ class Pocores(object):
                                                       max_sent_dist,
                                                       debug=debug)
 
-    def _resolve_nominal_anaphora(self, anaphora):
+    def _resolve_nominal_anaphora(self, anaphora, max_sent_dist, debug=False):
         """
         Tries to resolve a given nominal anaphora.
         If this fails the given word is registered as a new discourse entity.
@@ -259,6 +260,11 @@ class Pocores(object):
         ----------
         anaphora : str
             ID of the token node that represents the anaphora
+        max_sent_dist : int
+            look for potential antecedents only in the preceding
+            `max_sent_dist` number of sentences
+        debug : bool
+            produce additional debugging output
 
         Returns
         -------
@@ -269,11 +275,14 @@ class Pocores(object):
         """
         self.candidate_report[anaphora]['anaphora_type'] = 'nominal'
 
-        candidates_list = self._get_candidates()
+        cand_list = self._get_candidates()
+        filtered_candidates = filters.get_filtered_candidates(
+            self, cand_list, anaphora, max_sent_dist, verbose=debug)
+
         # iterate over antecedent candidates, starting from the closest
         # preceding one to the left-most one
-        candidates_list.reverse()
-        for antecedent in candidates_list:
+        filtered_candidates.reverse()
+        for antecedent in filtered_candidates:
             if filters.is_coreferent(self, antecedent, anaphora):
                 first_mention = self.mentions[antecedent]
                 self.entities[first_mention].append(anaphora)
@@ -391,7 +400,7 @@ class Pocores(object):
                                           'pocores:anaphor_antecedent': ant_node_id,
                                           'pocores:referentiality': 'referring'}
 
-                        edge_attrs = {'edge_type': EdgeTypes.pointing_relation,
+                        edge_attrs = {'edge_type': dg.EdgeTypes.pointing_relation,
                                       'label': 'pocores:antecedent'}
                         layers = {'pocores', 'pocores:markable'}
                         self.document.add_edge(token_node_id, ant_node_id, layers, attr_dict=edge_attrs)
@@ -413,7 +422,7 @@ def traverse_dependencies_down(docgraph, node_id):
     yield node_id
     out_edges = docgraph.edge[node_id]
     for target in out_edges:
-        if any(edge_attr['edge_type'] == EdgeTypes.dominance_relation
+        if any(edge_attr['edge_type'] == dg.EdgeTypes.dominance_relation
                for edge_id, edge_attr in out_edges[target].iteritems()):
             for target_id in traverse_dependencies_down(docgraph, target):
                 yield target_id
@@ -527,7 +536,7 @@ def write_brat(pocores, output_dir):
     doc_name = os.path.basename(pocores.document.name)
     with codecs.open(os.path.join(output_dir, doc_name+'.txt'),
                      'wb', encoding='utf-8') as txtfile:
-        txtfile.write(get_text(pocores.document))
+        txtfile.write(dg.get_text(pocores.document))
     with codecs.open(os.path.join(output_dir, 'annotation.conf'),
                      'wb', encoding='utf-8') as annotation_conf:
         annotation_conf.write(create_annotation_conf(pocores))
@@ -575,26 +584,75 @@ def print_coreference_report(pocores):
         print chain
 
 
-def run_pocores_with_cli_arguments():
-    parser, args = cli.parse_options()
-    if args.input is None:
-        parser.print_help()
-        sys.exit(0)
-    assert args.informat in ('2009', '2010')
-    assert args.outformat in ('bracketed', 'brat')
+def run_pocores(input_file, input_format, output_dest=None,
+                output_format='bracketed', weights=WEIGHTS,
+                max_sent_dist=MAX_SENT_DIST, debug=False,
+                eval_file=None):
+    """
+    run the pocores coreference system on a mate-parsed, CoNLL-formatted
+    input file.
+    """
+    assert input_format in ('2009', '2010')
+    assert output_format in ('bracketed', 'brat')
 
-    if args.informat == '2009':
-        docgraph = ConllDocumentGraph(args.input, conll_format=args.informat,
+    if input_format == '2009':
+        docgraph = dg.read_conll(input_file, conll_format=input_format,
                                       deprel_attr='pdeprel', feat_attr='pfeat',
                                       head_attr='phead', lemma_attr='plemma',
                                       pos_attr='ppos')
     else:  # conll 2010 format
-        docgraph = ConllDocumentGraph(args.input, conll_format=args.informat,
+        docgraph = dg.read_conll(input_file, conll_format=input_format,
                                       deprel_attr='pdeprel', feat_attr='pfeat',
                                       head_attr='phead', lemma_attr='lemma',
                                       pos_attr='ppos')
 
     pocores = Pocores(docgraph)
+    pocores.resolve_anaphora(weights, max_sent_dist, debug=debug)
+    pocores.add_coreference_chains_to_docgraph()
+
+    if output_format == 'bracketed':
+        if isinstance(output_dest, file):
+            output_dest.write(output_with_brackets(pocores))
+        else:
+            path_to_dir, _filename = os.path.split(output_dest)
+            create_dir(path_to_dir)
+            with codecs.open(output_dest, 'w', 'utf-8') as output_file:
+                output_file.write(output_with_brackets(pocores))
+
+    else:  # 'brat'
+        if not isinstance(output_dest, file):
+            # output_dest will be treated as a directory
+            write_brat(pocores, output_dest)
+        else:
+            sys.stderr.write('For brat output specify an output folder.\n')
+            sys.exit(1)
+
+    if debug:
+        print_coreference_report(pocores)
+
+    if eval_file:
+        # TODO: implement proper scorer.pl-based evaluation
+        # there's some useful code in the /var/local/git/Depot/coreference.git
+        # repo on hebe
+        raise NotImplementedError
+
+    return pocores
+
+
+def run_pocores_with_cli_arguments(argv=sys.argv[1:]):
+    """
+    Run the pocores coreference system with the given command line arguments.
+    This will generate output files in brat or bracket format.
+
+    Parameters
+    ----------
+    argv : list of str
+        a list of command line arguments (usually from sys.argv[1:])
+    """
+    parser, args = cli.parse_options(argv)
+    if args.input is None:
+        parser.print_help()
+        sys.exit(0)
 
     weights = WEIGHTS
     if args.weights:  # if set, use command line weights.
@@ -611,39 +669,15 @@ def run_pocores_with_cli_arguments():
         except ValueError as e:
             print "max_sent_dist must be an integer. {0}".format(e)
 
-    pocores.resolve_anaphora(weights, max_sent_dist, debug=args.debug)
-    pocores.add_coreference_chains_to_docgraph()
-
-    if args.outformat == 'bracketed':
-        if isinstance(args.output_dest, file):
-            args.output_dest.write(output_with_brackets(pocores))
-        else:
-            path_to_dir, _filename = os.path.split(args.output_dest)
-            create_dir(path_to_dir)
-            with codecs.open(args.output_dest, 'w', 'utf-8') as output_dest:
-                output_dest.write(output_with_brackets(pocores))
-
-    else:  # 'brat'
-        if not isinstance(args.output_dest, file):
-            # args.output_dest will be treated as a directory
-            write_brat(pocores, args.output_dest)
-        else:
-            sys.stderr.write('For brat output specify an output folder.\n')
-            sys.exit(1)
-
-    if args.debug:
-        print_coreference_report(pocores)
-
-    if args.eval_file:
-        from discoursegraphs.readwrite import MMAXDocumentGraph
-        import pudb; pudb.set_trace() # TODO: rm debug
-        eval_docgraph = MMAXDocumentGraph(args.eval_file)
-        eval_docgraph.merge_graphs(pocores.document)
-
+    run_pocores(input_file=args.input, input_format=args.informat,
+                output_dest=args.output_dest,
+                output_format=args.outformat, weights=weights,
+                max_sent_dist=max_sent_dist, debug=args.debug,
+                eval_file=args.eval_file)
 
 if __name__ == '__main__':
     """
     parses command line arguments, runs coreference analysis and produdes
     output (stdout or file(s)).
     """
-    run_pocores_with_cli_arguments()
+    run_pocores_with_cli_arguments(sys.argv[1:])
