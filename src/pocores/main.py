@@ -592,6 +592,228 @@ def print_coreference_report(pocores):
     for chain in non_trivial_chains:
         print chain
 
+def make_xml(pocores):  
+    from lxml import etree
+    import datetime as _dt
+    
+    def idx_string_to_int(string_idx, pt=False):
+	sentence_id, word_id = string_idx.split('_')
+	if pt:
+	    return int( sentence_id[1:] )
+	return int( word_id[1:] )
+    
+    root = etree.Element('root')
+    if len(str(_dt.datetime.now().minute)) == 1:
+        dt = str(_dt.datetime.now().year) + '/' + str(_dt.datetime.now().month) + '/' + str(_dt.datetime.now().day) + ' ' + str(_dt.datetime.now().hour) + ':0' + str(_dt.datetime.now().minute)
+    else:
+        dt = str(_dt.datetime.now().year) + '/' + str(_dt.datetime.now().month) + '/' + str(_dt.datetime.now().day) + ' ' + str(_dt.datetime.now().hour) + ':' + str(_dt.datetime.now().minute)
+    document = etree.Element('document', computation_date=dt)
+    
+    mention_sets = {}
+    text = etree.Element('text')
+    sentence_idx = 1
+    for sent_id in pocores.document.sentences:
+        sentence_element = etree.Element('sentence', index=str(sentence_idx))
+        
+        token_index = 1
+        for token_id in pocores.node_attrs(sent_id)['tokens']:
+            if 'conll:number' in pocores.node_attrs(token_id) and 'conll:person' in pocores.node_attrs(token_id) and 'conll:gender' in pocores.node_attrs(token_id):
+                if "NE" in pocores.node_attrs(token_id):
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'], 
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                num = pocores.node_attrs(token_id)['conll:number'],
+                                                                pers = str(pocores.node_attrs(token_id)['conll:person']),
+                                                                gen = pocores.node_attrs(token_id)['conll:gender'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                # TODO: what was that?
+                                                                ne = pocores.node_attrs(token_id)["NE"],
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"]
+                                                    )
+                else:
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'], 
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                num = pocores.node_attrs(token_id)['conll:number'],
+                                                                pers = str(pocores.node_attrs(token_id)['conll:person']),
+                                                                gen = pocores.node_attrs(token_id)['conll:gender'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"]
+                                                    )
+            elif "conll:person" in pocores.node_attrs(token_id) and "conll:gender" in pocores.node_attrs(token_id):
+                if "NE" in pocores.node_attrs(token_id):
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'], 
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                pers = str(pocores.node_attrs(token_id)['conll:person']),
+                                                                gen = pocores.node_attrs(token_id)['conll:gender'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"],
+                                                                ne = pocores.node_attrs(token_id)["NE"]
+                                                    )
+                else:
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                pers = str(pocores.node_attrs(token_id)['conll:person']),
+                                                                gen = pocores.node_attrs(token_id)['conll:gender'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"]
+                                                    )
+            elif "conll:number" in pocores.node_attrs(token_id) and "conll:person" in pocores.node_attrs(token_id):
+                if "NE" in pocores.node_attrs(token_id):
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                num = pocores.node_attrs(token_id)['conll:number'],
+                                                                pers = str(pocores.node_attrs(token_id)['conll:person']),
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"],
+                                                                ne = pocores.node_attrs(token_id)["NE"]
+                                                    )
+                else:
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                num = pocores.node_attrs(token_id)['conll:number'],
+                                                                pers = str(pocores.node_attrs(token_id)['conll:person']),
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"]
+                                                    )
+            elif "conll:number" in pocores.node_attrs(token_id) and "conll:gender" in pocores.node_attrs(token_id):
+                if "NE" in pocores.node_attrs(token_id):
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                num = pocores.node_attrs(token_id)['conll:number'],
+                                                                gen = pocores.node_attrs(token_id)['conll:gender'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"],
+                                                                ne = pocores.node_attrs(token_id)["NE"]
+                                                    )
+                else:
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                num = pocores.node_attrs(token_id)['conll:number'],
+                                                                gen = pocores.node_attrs(token_id)['conll:gender'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"]
+                                                    )
+            elif "conll:person" in pocores.node_attrs(token_id):
+                if "NE" in pocores.node_attrs(token_id):
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                pers = str(pocores.node_attrs(token_id)['conll:person']),
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"],
+                                                                ne = pocores.node_attrs(token_id)["NE"]
+                                                    )
+                else:
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                pers = str(pocores.node_attrs(token_id)['conll:person']),
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"]
+                                                    )
+            elif "conll:number" in pocores.node_attrs(token_id):
+                if "NE" in pocores.node_attrs(token_id):
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                num = pocores.node_attrs(token_id)['conll:number'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"],
+                                                                ne = pocores.node_attrs(token_id)["NE"]
+                                                    )
+                else:
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                num = pocores.node_attrs(token_id)['conll:number'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"]
+                                                    )
+            elif "conll:gender" in pocores.node_attrs(token_id):
+                if "NE" in pocores.node_attrs(token_id):
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                gen = pocores.node_attrs(token_id)['conll:gender'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"],
+                                                                ne = pocores.node_attrs(token_id)["NE"]
+                                                    )
+                else:
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                gen = pocores.node_attrs(token_id)['conll:gender'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"]
+                                                    )
+            else:
+                if "NE" in pocores.node_attrs(token_id):
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"],
+                                                                ne = pocores.node_attrs(token_id)["NE"]
+                                                    )
+                else:
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
+                                                                form = pocores.node_attrs(token_id)['token'],
+                                                                lemma = pocores.node_attrs(token_id)['plemma'],
+                                                                pos = pocores.node_attrs(token_id)['ppos'],
+                                                                head = str(pocores.node_attrs(token_id)["phead"]),
+                                                                deprel = pocores.node_attrs(token_id)["pdeprel"]
+                                                    )
+            
+            token_index += 1
+                                    
+            sentence_element.append(token_element)
+        
+        text.append(sentence_element)
+        sentence_idx += 1
+    
+    mentions_element = etree.Element('mentions')
+    for head_ana in pocores.entities:
+	mention_set_element = etree.Element('coreferring_set', id=str(head_ana))
+	mention_ids = pocores.entities[head_ana]
+	for mention_id in mention_ids:
+	    kids = pocores._get_children(mention_id)
+	    this_surface_form = [ ]
+	    for entry in kids:
+		this_surface_form.append(pocores.node_attrs(entry)['token'])
+	    
+	    mention_element = etree.Element('mention', sentence_id=str(idx_string_to_int(mention_id, True)), start_token=str( idx_string_to_int(kids[0]) ), end_token=str( idx_string_to_int(kids[-1]) ), surface_form=(' '.join(this_surface_form)) )
+	    mention_set_element.append(mention_element)
+	mentions_element.append(mention_set_element)
+    
+    document.append(text)
+    document.append(mentions_element)
+    root.append(document)
+    return (etree.tostring(root, xml_declaration=True, pretty_print=True, encoding='utf8'))
+
+
 
 def run_pocores(input_file, input_format, output_dest=None,
                 output_format='bracketed', weights=WEIGHTS,
@@ -602,7 +824,7 @@ def run_pocores(input_file, input_format, output_dest=None,
     input file.
     """
     assert input_format in ('2009', '2010')
-    assert output_format in ('bracketed', 'brat')
+    assert output_format in ('bracketed', 'brat', 'xml')
 
     if input_format == '2009':
         docgraph = dg.read_conll(input_file, conll_format=input_format,
@@ -627,7 +849,14 @@ def run_pocores(input_file, input_format, output_dest=None,
             create_dir(path_to_dir)
             with codecs.open(output_dest, 'w', 'utf-8') as output_file:
                 output_file.write(output_with_brackets(pocores))
-
+    elif output_format == 'xml':
+	if isinstance(output_dest, file):
+            output_dest.write(make_xml(pocores))
+        else:
+            path_to_dir, _filename = os.path.split(output_dest)
+            create_dir(path_to_dir)
+            with codecs.open(output_dest, 'w', 'utf-8') as output_file:
+                output_file.write(make_xml(pocores))
     else:  # 'brat'
         if not isinstance(output_dest, file):
             # output_dest will be treated as a directory

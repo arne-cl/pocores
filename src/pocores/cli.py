@@ -57,7 +57,7 @@ def parse_options(argv):
     output_options.add_argument('-f', '--output_format', dest='outformat',
         default='bracketed',
         help=('Specify format the output shall be printed in. Format can be one'
-        ' of the following: bracketed, brat'),
+        ' of the following: bracketed, brat, xml'),
         metavar='OUTFORMAT')
 
     eval_options = parser.add_argument_group("Evaluation/Debug Options")
