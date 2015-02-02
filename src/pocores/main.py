@@ -575,7 +575,62 @@ def print_coreference_report(pocores):
         print chain
 
 
-def run_pocores_with_cli_options(argv):
+def run_pocores(input_file, input_format, output_dest=None,
+                output_format='bracketed', weights=WEIGHTS,
+                max_sent_dist=MAX_SENT_DIST, debug=False,
+                eval_file=None):
+    """
+    run the pocores coreference system on a mate-parsed, CoNLL-formatted
+    input file.
+    """
+    assert input_format in ('2009', '2010')
+    assert output_format in ('bracketed', 'brat')
+
+    if input_format == '2009':
+        docgraph = dg.read_conll(input_file, conll_format=input_format,
+                                      deprel_attr='pdeprel', feat_attr='pfeat',
+                                      head_attr='phead', lemma_attr='plemma',
+                                      pos_attr='ppos')
+    else:  # conll 2010 format
+        docgraph = dg.read_conll(input_file, conll_format=input_format,
+                                      deprel_attr='pdeprel', feat_attr='pfeat',
+                                      head_attr='phead', lemma_attr='lemma',
+                                      pos_attr='ppos')
+
+    pocores = Pocores(docgraph)
+    pocores.resolve_anaphora(weights, max_sent_dist, debug=debug)
+    pocores.add_coreference_chains_to_docgraph()
+
+    if output_format == 'bracketed':
+        if isinstance(output_dest, file):
+            output_dest.write(output_with_brackets(pocores))
+        else:
+            path_to_dir, _filename = os.path.split(output_dest)
+            create_dir(path_to_dir)
+            with codecs.open(output_dest, 'w', 'utf-8') as output_file:
+                output_file.write(output_with_brackets(pocores))
+
+    else:  # 'brat'
+        if not isinstance(output_dest, file):
+            # output_dest will be treated as a directory
+            write_brat(pocores, output_dest)
+        else:
+            sys.stderr.write('For brat output specify an output folder.\n')
+            sys.exit(1)
+
+    if debug:
+        print_coreference_report(pocores)
+
+    if eval_file:
+        # TODO: implement proper scorer.pl-based evaluation
+        # there's some useful code in the /var/local/git/Depot/coreference.git
+        # repo on hebe
+        raise NotImplementedError
+
+    return pocores
+
+
+def run_pocores_with_cli_arguments(argv=sys.argv[1:]):
     """
     Run the pocores coreference system with the given command line arguments.
     This will generate output files in brat or bracket format.
@@ -589,21 +644,6 @@ def run_pocores_with_cli_options(argv):
     if args.input is None:
         parser.print_help()
         sys.exit(0)
-    assert args.informat in ('2009', '2010')
-    assert args.outformat in ('bracketed', 'brat')
-
-    if args.informat == '2009':
-        docgraph = ConllDocumentGraph(args.input, conll_format=args.informat,
-                                      deprel_attr='pdeprel', feat_attr='pfeat',
-                                      head_attr='phead', lemma_attr='plemma',
-                                      pos_attr='ppos')
-    else:  # conll 2010 format
-        docgraph = ConllDocumentGraph(args.input, conll_format=args.informat,
-                                      deprel_attr='pdeprel', feat_attr='pfeat',
-                                      head_attr='phead', lemma_attr='lemma',
-                                      pos_attr='ppos')
-
-    pocores = Pocores(docgraph)
 
     weights = WEIGHTS
     if args.weights:  # if set, use command line weights.
@@ -620,39 +660,15 @@ def run_pocores_with_cli_options(argv):
         except ValueError as e:
             print "max_sent_dist must be an integer. {0}".format(e)
 
-    pocores.resolve_anaphora(weights, max_sent_dist, debug=args.debug)
-    pocores.add_coreference_chains_to_docgraph()
-
-    if args.outformat == 'bracketed':
-        if isinstance(args.output_dest, file):
-            args.output_dest.write(output_with_brackets(pocores))
-        else:
-            path_to_dir, _filename = os.path.split(args.output_dest)
-            create_dir(path_to_dir)
-            with codecs.open(args.output_dest, 'w', 'utf-8') as output_dest:
-                output_dest.write(output_with_brackets(pocores))
-
-    else:  # 'brat'
-        if not isinstance(args.output_dest, file):
-            # args.output_dest will be treated as a directory
-            write_brat(pocores, args.output_dest)
-        else:
-            sys.stderr.write('For brat output specify an output folder.\n')
-            sys.exit(1)
-
-    if args.debug:
-        print_coreference_report(pocores)
-
-    if args.eval_file:
-        from discoursegraphs.readwrite import MMAXDocumentGraph
-        import pudb; pudb.set_trace() # TODO: rm debug
-        eval_docgraph = MMAXDocumentGraph(args.eval_file)
-        eval_docgraph.merge_graphs(pocores.document)
-
+    run_pocores(input_file=args.input, input_format=args.informat,
+                output_dest=args.output_dest,
+                output_format=args.outformat, weights=weights,
+                max_sent_dist=max_sent_dist, debug=args.debug,
+                eval_file=args.eval_file)
 
 if __name__ == '__main__':
     """
     parses command line arguments, runs coreference analysis and produdes
     output (stdout or file(s)).
     """
-    run_pocores_with_cli_options(sys.argv[1:])
+    run_pocores_with_cli_arguments(sys.argv[1:])
