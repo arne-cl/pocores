@@ -241,7 +241,8 @@ class Pocores(object):
                 # Treatment of Nominals
                 if (tok_attrs[pos_attr] in noun_tags
                    and tok_attrs[deprel_attr] != "PNC"):
-                    self._resolve_nominal_anaphora(token_id)
+                    self._resolve_nominal_anaphora(token_id, max_sent_dist,
+                                                   debug=debug)
 
                 # Treatment of Pronominals
                 elif (tok_attrs[pos_attr] in pronoun_tags
@@ -250,7 +251,7 @@ class Pocores(object):
                                                       max_sent_dist,
                                                       debug=debug)
 
-    def _resolve_nominal_anaphora(self, anaphora):
+    def _resolve_nominal_anaphora(self, anaphora, max_sent_dist, debug=False):
         """
         Tries to resolve a given nominal anaphora.
         If this fails the given word is registered as a new discourse entity.
@@ -259,6 +260,11 @@ class Pocores(object):
         ----------
         anaphora : str
             ID of the token node that represents the anaphora
+        max_sent_dist : int
+            look for potential antecedents only in the preceding
+            `max_sent_dist` number of sentences
+        debug : bool
+            produce additional debugging output
 
         Returns
         -------
@@ -269,11 +275,14 @@ class Pocores(object):
         """
         self.candidate_report[anaphora]['anaphora_type'] = 'nominal'
 
-        candidates_list = self._get_candidates()
+        cand_list = self._get_candidates()
+        filtered_candidates = filters.get_filtered_candidates(
+            self, cand_list, anaphora, max_sent_dist, verbose=debug)
+
         # iterate over antecedent candidates, starting from the closest
         # preceding one to the left-most one
-        candidates_list.reverse()
-        for antecedent in candidates_list:
+        filtered_candidates.reverse()
+        for antecedent in filtered_candidates:
             if filters.is_coreferent(self, antecedent, anaphora):
                 first_mention = self.mentions[antecedent]
                 self.entities[first_mention].append(anaphora)
