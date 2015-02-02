@@ -129,12 +129,23 @@ def morph_agreement(pocores, antecedent_node, anaphora_node):
     def hotfix_feats(feat_dict):
       feats = feat_dict['pfeat'].strip().split('|')
       for entry in feats:
-	  if entry in ['fem', 'masc', 'neut']:
-	      feat_dict[ns+":gender"] = entry
-	  if entry in ['pl', 'sg']:
-	      feat_dict[ns+":number"] = entry
-	  if entry in ['3', '2', '1']:
-	      feat_dict[ns+":person"] = entry
+	  # check for 2010 format
+	  attr_vals = entry.split('=')
+	  if len(attr_vals) > 1:
+	      attr, val = attr_vals
+	      if attr == 'number':
+		  feat_dict[ns+":number"] = val
+	      if attr == 'gender':
+		  feat_dict[ns+":gender"] = val
+	      if attr == 'person':
+		  feat_dict[ns+":person"] = val		  
+	  else:
+	      if entry in ['fem', 'masc', 'neut']:
+		  feat_dict[ns+":gender"] = entry
+	      if entry in ['pl', 'sg']:
+		  feat_dict[ns+":number"] = entry
+	      if entry in ['3', '2', '1']:
+		  feat_dict[ns+":person"] = entry
     hotfix_feats(antecedent)
     hotfix_feats(anaphora)
 
