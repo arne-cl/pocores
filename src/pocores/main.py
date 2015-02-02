@@ -259,7 +259,7 @@ class Pocores(object):
         Parameters
         ----------
         anaphora : str
-            ID of the token node that represents the anaphora
+            the token ID of the anaphora
         max_sent_dist : int
             look for potential antecedents only in the preceding
             `max_sent_dist` number of sentences
@@ -314,11 +314,20 @@ class Pocores(object):
             - PPOSAT: attributive possesive pronoung, e.g. mein [Buch],
               deine [Mutter]
 
-        @type anaphora: C{tuple} of (C{int}, C{int})
-        @type weights: C{list} of 7 C{int}
-        @param max_sent_dist: number of preceding sentences that will be
-        looked at, i.e. the sentences that contain potential antecedents
-        @type max_sent_dist: C{int}
+        Parameters
+        ----------
+        anaphora : str
+            the token ID of the anaphora
+        weights: list of int
+            the 7 weights used for ranking antecedent candidates
+        max_sent_dist : int
+            look for potential antecedents only in the preceding
+            `max_sent_dist` number of sentences
+        pos_attr : str or None
+            the name of the POS column (e.g. 'ppos') from the CoNLL input file
+            that will be used (there are often two of them)
+        debug : bool
+            produce additional debugging output
 
         TODO: provide documentation for scoring and/or convert weights into
               a namedtuple
