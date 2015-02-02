@@ -3,4 +3,5 @@
 
 # flake8: noqa
 
-from pocores.main import Pocores, WEIGHTS, print_coreference_report
+from pocores.main import (Pocores, WEIGHTS, print_coreference_report,
+    run_pocores)

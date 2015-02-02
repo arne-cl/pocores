@@ -10,10 +10,22 @@ import sys
 from argparse import ArgumentParser, FileType
 
 
-def parse_options():
+def parse_options(argv):
     """
     @author: Jonathan Sonntag
     @author: Arne Neumann
+    
+    Parameters
+    ----------
+    argv : list of str
+        a list of command line arguments (usually from sys.argv[1:])
+
+    Returns
+    -------
+    parser : argparse.ArgumentParser
+        the argument parser generated from the command line input
+    args : argparse.ArgumentParser
+        the parsed command line arguments
     """
     parser = ArgumentParser(prog='pocores')
 
@@ -45,7 +57,7 @@ def parse_options():
     output_options.add_argument('-f', '--output_format', dest='outformat',
         default='bracketed',
         help=('Specify format the output shall be printed in. Format can be one'
-        ' of the following: bracketed, brat'),
+        ' of the following: bracketed, brat, xml'),
         metavar='OUTFORMAT')
 
     eval_options = parser.add_argument_group("Evaluation/Debug Options")
@@ -55,8 +67,8 @@ def parse_options():
         help=(('evaluate Pocores coreference resolution against *.mmax gold '
                'standard file')))
 
-    return parser, parser.parse_args(sys.argv[1:])
+    return parser, parser.parse_args(argv)
 
 if __name__ == '__main__':
-    parser, args = parse_options()
+    parser, args = parse_options(sys.argv[1:])
     print args
