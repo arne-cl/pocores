@@ -592,34 +592,40 @@ def print_coreference_report(pocores):
     for chain in non_trivial_chains:
         print chain
 
-def make_xml(pocores):  
+
+def make_xml(pocores):
+    """
+    @author: Jonathan Sonntag
+
+    TODO: refactor this copy-pasta!
+    """
     from lxml import etree
     import datetime as _dt
-    
+
     def idx_string_to_int(string_idx, pt=False):
-	sentence_id, word_id = string_idx.split('_')
-	if pt:
-	    return int( sentence_id[1:] )
-	return int( word_id[1:] )
-    
+        sentence_id, word_id = string_idx.split('_')
+        if pt:
+            return int( sentence_id[1:] )
+        return int( word_id[1:] )
+
     root = etree.Element('root')
     if len(str(_dt.datetime.now().minute)) == 1:
         dt = str(_dt.datetime.now().year) + '/' + str(_dt.datetime.now().month) + '/' + str(_dt.datetime.now().day) + ' ' + str(_dt.datetime.now().hour) + ':0' + str(_dt.datetime.now().minute)
     else:
         dt = str(_dt.datetime.now().year) + '/' + str(_dt.datetime.now().month) + '/' + str(_dt.datetime.now().day) + ' ' + str(_dt.datetime.now().hour) + ':' + str(_dt.datetime.now().minute)
     document = etree.Element('document', computation_date=dt)
-    
+
     mention_sets = {}
     text = etree.Element('text')
     sentence_idx = 1
     for sent_id in pocores.document.sentences:
         sentence_element = etree.Element('sentence', index=str(sentence_idx))
-        
+
         token_index = 1
         for token_id in pocores.node_attrs(sent_id)['tokens']:
             if 'conll:number' in pocores.node_attrs(token_id) and 'conll:person' in pocores.node_attrs(token_id) and 'conll:gender' in pocores.node_attrs(token_id):
                 if "NE" in pocores.node_attrs(token_id):
-                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'], 
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
                                                                 form = pocores.node_attrs(token_id)['token'],
                                                                 lemma = pocores.node_attrs(token_id)['plemma'],
                                                                 pos = pocores.node_attrs(token_id)['ppos'],
@@ -632,7 +638,7 @@ def make_xml(pocores):
                                                                 deprel = pocores.node_attrs(token_id)["pdeprel"]
                                                     )
                 else:
-                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'], 
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
                                                                 form = pocores.node_attrs(token_id)['token'],
                                                                 lemma = pocores.node_attrs(token_id)['plemma'],
                                                                 pos = pocores.node_attrs(token_id)['ppos'],
@@ -644,7 +650,7 @@ def make_xml(pocores):
                                                     )
             elif "conll:person" in pocores.node_attrs(token_id) and "conll:gender" in pocores.node_attrs(token_id):
                 if "NE" in pocores.node_attrs(token_id):
-                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'], 
+                    token_element = etree.Element   ('token',   index=pocores.node_attrs(token_id)['word_id'],
                                                                 form = pocores.node_attrs(token_id)['token'],
                                                                 lemma = pocores.node_attrs(token_id)['plemma'],
                                                                 pos = pocores.node_attrs(token_id)['ppos'],
@@ -786,28 +792,33 @@ def make_xml(pocores):
                                                                 head = str(pocores.node_attrs(token_id)["phead"]),
                                                                 deprel = pocores.node_attrs(token_id)["pdeprel"]
                                                     )
-            
+
             token_index += 1
-                                    
+
             sentence_element.append(token_element)
-        
+
         text.append(sentence_element)
         sentence_idx += 1
-    
+
     mentions_element = etree.Element('mentions')
     for head_ana in pocores.entities:
-	mention_set_element = etree.Element('coreferring_set', id=str(head_ana))
-	mention_ids = pocores.entities[head_ana]
-	for mention_id in mention_ids:
-	    kids = pocores._get_children(mention_id)
-	    this_surface_form = [ ]
-	    for entry in kids:
-		this_surface_form.append(pocores.node_attrs(entry)['token'])
-	    
-	    mention_element = etree.Element('mention', sentence_id=str(idx_string_to_int(mention_id, True)), start_token=str( idx_string_to_int(kids[0]) ), end_token=str( idx_string_to_int(kids[-1]) ), surface_form=(' '.join(this_surface_form)) )
-	    mention_set_element.append(mention_element)
-	mentions_element.append(mention_set_element)
-    
+        mention_set_element = etree.Element('coreferring_set', id=str(head_ana))
+        mention_ids = pocores.entities[head_ana]
+        for mention_id in mention_ids:
+            kids = pocores._get_children(mention_id)
+            this_surface_form = [ ]
+            for entry in kids:
+                this_surface_form.append(pocores.node_attrs(entry)['token'])
+
+            mention_element = etree.Element(
+                'mention',
+                sentence_id=str(idx_string_to_int(mention_id, True)),
+                start_token=str( idx_string_to_int(kids[0]) ),
+                end_token=str( idx_string_to_int(kids[-1]) ),
+                surface_form=(' '.join(this_surface_form)) )
+            mention_set_element.append(mention_element)
+        mentions_element.append(mention_set_element)
+
     document.append(text)
     document.append(mentions_element)
     root.append(document)
