@@ -853,6 +853,8 @@ def run_pocores(input_file, input_format, output_dest=None,
     pocores.add_coreference_chains_to_docgraph()
 
     if output_format == 'bracketed':
+        if not output_dest:
+            sys.stdout.write(output_with_brackets(pocores))
         if isinstance(output_dest, file):
             output_dest.write(output_with_brackets(pocores))
         else:
@@ -860,8 +862,11 @@ def run_pocores(input_file, input_format, output_dest=None,
             create_dir(path_to_dir)
             with codecs.open(output_dest, 'w', 'utf-8') as output_file:
                 output_file.write(output_with_brackets(pocores))
+
     elif output_format == 'xml':
-	if isinstance(output_dest, file):
+        if not output_dest:
+            sys.stdout.write(make_xml(pocores))
+        if isinstance(output_dest, file):
             output_dest.write(make_xml(pocores))
         else:
             path_to_dir, _filename = os.path.split(output_dest)
