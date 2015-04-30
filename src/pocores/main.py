@@ -397,9 +397,18 @@ class Pocores(object):
         return first_mention
 
     def add_coreference_chains_to_docgraph(self):
+        """
+        adds all the coreference chains that were found by pocores to the
+        document graph.
+
+        Note, that the first element of a coreference chain is actually
+        the last mention of an entity in the text!
+        """
         for chain_generator in self._get_coref_chains():
             chain = list(chain_generator)
             chain_len = len(chain)
+            # ignore chains with only one element
+            # TODO: find out, why there can be empty chains at all!
             if chain and chain_len > 1:
                 for i, (token, token_node_id) in enumerate(chain):
                     if i < chain_len-1:  # if it's not the last/only element
@@ -414,7 +423,8 @@ class Pocores(object):
                         layers = {'pocores', 'pocores:markable'}
                         self.document.add_edge(token_node_id, ant_node_id, layers, attr_dict=edge_attrs)
 
-                    else:
+                    else: # the last or only element of the chain (i.e.
+                          # the first mention of an entity in the text)
                         markable_attrs = {'pocores:type': 'none',
                                           'pocores:anaphor_antecedent': 'empty',
                                           'pocores:referentiality': 'discourse-new'}
